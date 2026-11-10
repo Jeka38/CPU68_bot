@@ -958,7 +958,7 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
     )
     draw.text((left_x, y), progress_line, font=load_font(18, True), fill=green_mid)
     y += 28
-    draw.text((left_x, y), t("card_footer"), font=load_font(15, True), fill=green_dim)
+    draw.text((left_x, y), t("card_footer", step=MESSAGES_PER_RANK), font=load_font(15, True), fill=green_dim)
 
     # Footer status line
     draw.line((x1 + 20, y2 - 38, x2 - 20, y2 - 38), fill=green_dark, width=2)
