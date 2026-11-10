@@ -1076,8 +1076,12 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
         # ensure visible fill for small non-zero progress
         if fill_w < 4:
             draw.rectangle((bar_x1 + 4, bar_y1 + 4, bar_x1 + 4 + fill_w, bar_y2 - 4), fill=green)
-    draw.text((bar_x2 + 12, (bar_y1 + bar_y2) // 2), f"{progress}%",
-              font=load_font(16, True), fill=green_mid, anchor="lm")
+    pct_text = f"{progress}%"
+    pct_color = bg if progress >= 85 else green_mid
+    pct_anchor_x = bar_x2 - 8 if progress >= 85 else bar_x1 + 8
+    pct_anchor = "rm" if progress >= 85 else "lm"
+    draw.text((pct_anchor_x, (bar_y1 + bar_y2) // 2), pct_text,
+              font=load_font(14, True), fill=pct_color, anchor=pct_anchor)
     y += 40
     progress_line = (
         t("card_next", progress=progress, next_rank=next_rank)
@@ -1116,6 +1120,16 @@ async def send_rank_card(bot: Bot, chat_id: int, user_id: int,
         rank=html.escape(rank_name(messages)),
         messages=messages,
     )
+    if not announce:
+        nxt = next_rank_name(messages)
+        if nxt:
+            caption += "\n" + t(
+                "rank_next",
+                next_rank=html.escape(nxt),
+                remaining=MESSAGES_PER_RANK - (messages % MESSAGES_PER_RANK),
+            )
+        else:
+            caption += "\n" + t("rank_max")
     await bot.send_photo(
         chat_id=chat_id,
         photo=BufferedInputFile(card, filename="cpu_rank.png"),
@@ -1163,37 +1177,6 @@ async def profile_command(message: Message, bot: Bot):
 
     count = get_messages(message.chat.id, target.id)
     await send_rank_card(bot, message.chat.id, target.id, target.full_name, count)
-
-
-@dp.message(Command("rank"), ChatAllowed(), COMMAND_THROTTLE)
-async def rank_command(message: Message):
-    if message.chat.type not in ("group", "supergroup"):
-        await message.answer(t("group_only"))
-        return
-
-    target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
-    if not target or target.is_bot:
-        await message.answer(t("user_not_determined"))
-        return
-
-    count = get_messages(message.chat.id, target.id)
-    nxt = next_rank_name(count)
-    remaining = MESSAGES_PER_RANK - (count % MESSAGES_PER_RANK)
-    result = t(
-        "rank_text",
-        name=esc_name(target.full_name),
-        rank=html.escape(rank_name(count)),
-        count=count,
-    )
-    if nxt:
-        result += t(
-            "rank_next",
-            next_rank=html.escape(nxt),
-            remaining=remaining,
-        )
-    else:
-        result += t("rank_max")
-    await message.answer(result, parse_mode="HTML")
 
 
 @dp.message(Command("id"), COMMAND_THROTTLE)

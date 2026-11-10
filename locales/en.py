@@ -19,12 +19,11 @@ STRINGS = {
     "start_text": (
         "Hi! I am CPU Evolution Bot.\n\n"
         "/profile — your processor card\n"
-        "/rank — text info about your rank\n"
         "/user — member stats\n"
         "/ranks — list of ranks\n"
         "/top — group top 10\n"
         "/help — all commands\n\n"
-        "To view another member's profile or stats, reply to their message with /profile, /rank, or /user."
+        "To view another member's profile or stats, reply to their message with /profile or /user."
     ),
     "profile_group_only": "Profiles are available in groups only.",
     "user_not_determined": "Could not determine the user.",
@@ -42,11 +41,6 @@ STRINGS = {
         "📨 Messages: <b>{messages}</b>"
     ),
     "rank_up_final": "🏆 <b>Threadripper reached!</b>",
-    "rank_text": (
-        "🖥 <b>{name}</b>\n"
-        "⚙️ Rank: <b>{rank}</b>\n"
-        "📨 Messages: <b>{count}</b>\n"
-    ),
     "rank_next": (
         "🚀 Next: <b>{next_rank}</b>\n"
         "Until rank up: <b>{remaining}</b>"
@@ -60,13 +54,12 @@ STRINGS = {
     "public_help": (
         "🤖 <b>CPU Evolution Bot</b>\n\n"
         "/profile — processor rank card\n"
-        "/rank — text info about your rank\n"
         "/user — member stats\n"
         "/ranks — list of ranks\n"
         "/top — group top 10\n"
         "/id — Chat ID and User ID\n"
         "/help — this help\n\n"
-        "Another member's profile/stats: reply to their message with /profile, /rank, or /user.\n"
+        "Another member's profile/stats: reply to their message with /profile or /user.\n"
         "Commands work in groups."
     ),
 
