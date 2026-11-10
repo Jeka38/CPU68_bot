@@ -640,197 +640,296 @@ def layout_card_name(draw, text: str, max_width: int):
     return font, [_ellipsize(draw, line, font, max_width) for line in lines]
 
 
-def draw_legacy_cpu(draw, cx, cy, idx, accent, chip, label):
-    """Ceramic package with gold pins (286 / 386 / 486)."""
-    half = 76 + idx * 5
+def _draw_chip_label(draw, cx, cy, label, accent, big=30, small=17, dy=8):
+    draw.text(
+        (cx, cy - dy), label,
+        font=load_font(big if len(label) <= 4 else max(18, big - 8), True),
+        fill=_lighten(accent, 0.65), anchor="mm",
+    )
+    draw.text(
+        (cx, cy + dy + 22), "CPU", font=load_font(small, True),
+        fill=_lighten(accent, 0.35), anchor="mm",
+    )
+
+
+def draw_cpu_286(draw, cx, cy, accent, chip, label):
+    """Early ceramic DIP-like package."""
+    w, h = 150, 170
     pin = _lighten(accent, 0.25)
-    for i in range(-3, 4):
-        p = i * 26
-        draw.line((cx + p, cy - half - 24, cx + p, cy - half), fill=pin, width=6)
-        draw.line((cx + p, cy + half, cx + p, cy + half + 24), fill=pin, width=6)
-        draw.line((cx - half - 24, cy + p, cx - half, cy + p), fill=pin, width=6)
-        draw.line((cx + half, cy + p, cx + half + 24, cy + p), fill=pin, width=6)
-    draw.rounded_rectangle(
-        (cx - half, cy - half, cx + half, cy + half),
-        radius=12, fill=chip, outline=accent, width=3,
-    )
-    draw.polygon(
-        [(cx - half + 10, cy - half), (cx - half + 34, cy - half),
-         (cx - half + 10, cy - half + 24)],
-        fill=(9, 15, 29, 255),
-    )
-    inner = half - 24
-    draw.rounded_rectangle(
-        (cx - inner, cy - inner, cx + inner, cy + inner),
-        radius=6, fill=(10, 18, 30, 255),
-        outline=_darken(accent, 0.25), width=2,
-    )
-    draw.text(
-        (cx, cy - 8), label,
-        font=load_font(30 if len(label) <= 4 else 20, True),
-        fill=_lighten(accent, 0.65), anchor="mm",
-    )
-    draw.text(
-        (cx, cy + 34), "CPU", font=load_font(18, True),
-        fill=_lighten(accent, 0.35), anchor="mm",
-    )
+    for y in range(cy - 60, cy + 61, 20):
+        draw.line((cx - w // 2 - 22, y, cx - w // 2, y), fill=pin, width=6)
+        draw.line((cx + w // 2, y, cx + w // 2 + 22, y), fill=pin, width=6)
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=10, fill=chip, outline=accent, width=3)
+    draw.ellipse((cx - w // 2 + 8, cy - h // 2 + 8, cx - w // 2 + 24, cy - h // 2 + 24),
+                 fill=(9, 15, 29, 255), outline=_darken(accent, 0.2), width=2)
+    draw.rounded_rectangle((cx - 40, cy - 45, cx + 40, cy + 45), radius=6,
+                           fill=(10, 18, 30, 255), outline=_darken(accent, 0.25), width=2)
+    _draw_chip_label(draw, cx, cy, label, accent, big=28, small=16, dy=10)
 
 
-def draw_classic_cpu(draw, cx, cy, idx, accent, chip, label):
-    """Pentium-era heat spreader with bevel and notch."""
-    w, h = 250, 205
-    draw.rounded_rectangle(
-        (cx - w // 2 - 14, cy - h // 2 - 14, cx + w // 2 + 14, cy + h // 2 + 14),
-        radius=16, fill=_darken(chip, 0.35), outline=_darken(accent, 0.15),
-        width=3,
-    )
-    draw.rounded_rectangle(
-        (cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
-        radius=12, fill=chip, outline=accent, width=4,
-    )
-    draw.line(
-        (cx - w // 2 + 20, cy - h // 2 + 8, cx + w // 2 - 20, cy - h // 2 + 8),
-        fill=_lighten(accent, 0.6), width=2,
-    )
-    draw.polygon(
-        [(cx - w // 2, cy + h // 2 - 30), (cx - w // 2, cy + h // 2),
-         (cx - w // 2 + 30, cy + h // 2)],
-        fill=(9, 15, 29, 255),
-    )
-    draw.polygon(
-        [(cx - w // 2 + 20, cy - h // 2 + 20),
-         (cx - w // 2 + 52, cy - h // 2 + 20),
-         (cx - w // 2 + 20, cy - h // 2 + 52)],
-        fill=(*accent, 190),
-    )
-    draw.text(
-        (cx, cy - 8), label,
-        font=load_font(32 if len(label) <= 4 else 24, True),
-        fill=_lighten(accent, 0.65), anchor="mm",
-    )
-    draw.text(
-        (cx, cy + 42), "CPU", font=load_font(18, True),
-        fill=_lighten(accent, 0.35), anchor="mm",
-    )
+def draw_cpu_386(draw, cx, cy, accent, chip, label):
+    """Ceramic PGA package."""
+    half = 92
+    pin = _lighten(accent, 0.25)
+    for i in range(-4, 5):
+        p = i * 20
+        draw.line((cx + p, cy - half - 18, cx + p, cy - half), fill=pin, width=5)
+        draw.line((cx + p, cy + half, cx + p, cy + half + 18), fill=pin, width=5)
+        draw.line((cx - half - 18, cy + p, cx - half, cy + p), fill=pin, width=5)
+        draw.line((cx + half, cy + p, cx + half + 18, cy + p), fill=pin, width=5)
+    draw.rectangle((cx - half, cy - half, cx + half, cy + half), fill=chip, outline=accent, width=3)
+    draw.polygon([(cx - half, cy - half), (cx - half + 26, cy - half), (cx - half, cy - half + 26)],
+                 fill=(9, 15, 29, 255))
+    draw.rectangle((cx - 55, cy - 55, cx + 55, cy + 55), fill=(10, 18, 30, 255),
+                   outline=_darken(accent, 0.25), width=2)
+    _draw_chip_label(draw, cx, cy, label, accent, big=30, small=16, dy=8)
 
 
-def draw_core_cpu(draw, cx, cy, idx, accent, chip, label):
-    """Modern square IHS with a core-count bar row."""
+def draw_cpu_486(draw, cx, cy, accent, chip, label):
+    """Ceramic PGA with denser pins and center die."""
+    half = 98
+    pin = _lighten(accent, 0.3)
+    for i in range(-5, 6):
+        p = i * 17
+        draw.ellipse((cx + p - 3, cy - half - 16, cx + p + 3, cy - half - 10), fill=pin)
+        draw.ellipse((cx + p - 3, cy + half + 10, cx + p + 3, cy + half + 16), fill=pin)
+        draw.ellipse((cx - half - 16, cy + p - 3, cx - half - 10, cy + p + 3), fill=pin)
+        draw.ellipse((cx + half + 10, cy + p - 3, cx + half + 16, cy + p + 3), fill=pin)
+    draw.rounded_rectangle((cx - half, cy - half, cx + half, cy + half), radius=8,
+                           fill=chip, outline=accent, width=3)
+    draw.rounded_rectangle((cx - 58, cy - 58, cx + 58, cy + 58), radius=4,
+                           fill=_darken(chip, 0.2), outline=_lighten(accent, 0.2), width=2)
+    draw.rounded_rectangle((cx - 34, cy - 34, cx + 34, cy + 34), radius=3,
+                           fill=(10, 18, 30, 255), outline=accent, width=1)
+    _draw_chip_label(draw, cx, cy + 2, label, accent, big=28, small=15, dy=6)
+
+
+def draw_cpu_pentium(draw, cx, cy, accent, chip, label):
+    """Classic Pentium heat spreader."""
+    w, h = 240, 200
+    draw.rounded_rectangle((cx - w // 2 - 10, cy - h // 2 - 10, cx + w // 2 + 10, cy + h // 2 + 10),
+                           radius=14, fill=_darken(chip, 0.35), outline=_darken(accent, 0.2), width=2)
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=10, fill=chip, outline=accent, width=4)
+    for i, y in enumerate(range(cy - 70, cy + 71, 28)):
+        draw.line((cx - 95, y, cx + 95, y), fill=_lighten(accent, 0.15 + i * 0.02), width=1)
+    draw.rectangle((cx - w // 2 + 12, cy - h // 2 + 12, cx - w // 2 + 44, cy - h // 2 + 44),
+                   fill=(9, 15, 29, 255), outline=_lighten(accent, 0.2), width=2)
+    _draw_chip_label(draw, cx + 10, cy, label, accent, big=30, small=16, dy=8)
+
+
+def draw_cpu_pentium2(draw, cx, cy, accent, chip, label):
+    """Slot cartridge style (SECC)."""
+    w, h = 170, 260
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=14, fill=_darken(chip, 0.25), outline=accent, width=4)
+    draw.rounded_rectangle((cx - w // 2 + 14, cy - h // 2 + 18, cx + w // 2 - 14, cy + 20),
+                           radius=8, fill=chip, outline=_lighten(accent, 0.25), width=2)
+    draw.rectangle((cx - 35, cy + 40, cx + 35, cy + h // 2 - 18), fill=(20, 30, 45, 255),
+                   outline=_darken(accent, 0.2), width=2)
+    for y in range(cy + 50, cy + h // 2 - 28, 10):
+        draw.line((cx - 28, y, cx + 28, y), fill=(*accent, 120), width=2)
+    _draw_chip_label(draw, cx, cy - 30, label, accent, big=26, small=15, dy=8)
+
+
+def draw_cpu_pentium3(draw, cx, cy, accent, chip, label):
+    """Coppermine-style flip-chip on substrate."""
+    s = 210
+    draw.rounded_rectangle((cx - s // 2, cy - s // 2, cx + s // 2, cy + s // 2),
+                           radius=12, fill=_darken(chip, 0.3), outline=_darken(accent, 0.1), width=3)
+    draw.rounded_rectangle((cx - 72, cy - 72, cx + 72, cy + 72),
+                           radius=8, fill=chip, outline=accent, width=3)
+    draw.rounded_rectangle((cx - 46, cy - 46, cx + 46, cy + 46),
+                           radius=4, fill=_lighten(chip, 0.08), outline=_lighten(accent, 0.35), width=2)
+    for dx, dy in [(-90, -90), (70, -90), (-90, 70), (70, 70)]:
+        draw.ellipse((cx + dx, cy + dy, cx + dx + 20, cy + dy + 20),
+                     fill=(30, 40, 55, 255), outline=_darken(accent, 0.2), width=2)
+    _draw_chip_label(draw, cx, cy, label, accent, big=26, small=15, dy=8)
+
+
+def draw_cpu_pentium4(draw, cx, cy, accent, chip, label):
+    """Large rectangular IHS (NetBurst)."""
+    w, h = 270, 210
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=10, fill=chip, outline=accent, width=4)
+    draw.rounded_rectangle((cx - w // 2 + 14, cy - h // 2 + 14, cx + w // 2 - 14, cy + h // 2 - 14),
+                           radius=6, fill=_darken(chip, 0.18), outline=_lighten(accent, 0.2), width=2)
+    draw.line((cx - w // 2 + 18, cy, cx + w // 2 - 18, cy), fill=(*accent, 90), width=2)
+    draw.line((cx, cy - h // 2 + 18, cx, cy + h // 2 - 18), fill=(*accent, 90), width=2)
+    for x in range(cx - 100, cx + 101, 40):
+        draw.ellipse((x - 4, cy - h // 2 + 4, x + 4, cy - h // 2 + 12), fill=_lighten(accent, 0.4))
+    _draw_chip_label(draw, cx, cy, label, accent, big=30, small=16, dy=8)
+
+
+def draw_cpu_core2duo(draw, cx, cy, accent, chip, label):
+    """Dual-core layout under IHS."""
     half = 112
-    notch = 24
-    points = [
-        (cx - half + notch, cy - half), (cx + half - notch, cy - half),
-        (cx + half, cy - half + notch), (cx + half, cy + half - notch),
-        (cx + half - notch, cy + half), (cx - half + notch, cy + half),
-        (cx - half, cy + half - notch), (cx - half, cy - half + notch),
-    ]
-    draw.polygon(points, fill=_darken(chip, 0.15), outline=accent, width=4)
-    inner = half - 28
-    inner_points = [
-        (cx - inner + 16, cy - inner), (cx + inner - 16, cy - inner),
-        (cx + inner, cy - inner + 16), (cx + inner, cy + inner - 16),
-        (cx + inner - 16, cy + inner), (cx - inner + 16, cy + inner),
-        (cx - inner, cy + inner - 16), (cx - inner, cy - inner + 16),
-    ]
-    draw.polygon(
-        inner_points, fill=(10, 18, 30, 255),
-        outline=_lighten(accent, 0.25), width=2,
-    )
-    bars = 2 if idx == 7 else (idx - 6) * 2
-    bar_w, gap = 14, 6
-    total = bars * bar_w + (bars - 1) * gap
-    start = cx - total // 2
-    for i in range(bars):
-        x = start + i * (bar_w + gap)
-        draw.rounded_rectangle(
-            (x, cy + 40, x + bar_w, cy + 54), radius=3,
-            fill=(*accent, 170),
-        )
-    draw.text(
-        (cx, cy - 18), label, font=load_font(34, True),
-        fill=_lighten(accent, 0.65), anchor="mm",
-    )
-    draw.text(
-        (cx, cy + 12), "CPU", font=load_font(17, True),
-        fill=_lighten(accent, 0.35), anchor="mm",
-    )
+    draw.polygon([(cx - half + 20, cy - half), (cx + half - 20, cy - half),
+                  (cx + half, cy - half + 20), (cx + half, cy + half - 20),
+                  (cx + half - 20, cy + half), (cx - half + 20, cy + half),
+                  (cx - half, cy + half - 20), (cx - half, cy - half + 20)],
+                 fill=_darken(chip, 0.15), outline=accent, width=4)
+    for dx in (-32, 32):
+        draw.rounded_rectangle((cx + dx - 24, cy - 46, cx + dx + 24, cy + 8), radius=6,
+                               fill=(10, 18, 30, 255), outline=_lighten(accent, 0.3), width=2)
+    for i in range(2):
+        x = cx - 10 + i * 20
+        draw.rounded_rectangle((x - 6, cy + 34, x + 6, cy + 52), radius=3, fill=(*accent, 180))
+    _draw_chip_label(draw, cx, cy - 18, label, accent, big=26, small=15, dy=0)
 
 
-def draw_ryzen_cpu(draw, cx, cy, idx, accent, chip, label):
-    """Two CCDs and a central I/O die."""
+def draw_cpu_i3(draw, cx, cy, accent, chip, label):
+    """Compact dual-core modern chip."""
+    s = 210
+    draw.rounded_rectangle((cx - s // 2, cy - s // 2, cx + s // 2, cy + s // 2),
+                           radius=18, fill=_darken(chip, 0.2), outline=accent, width=4)
+    draw.rounded_rectangle((cx - 70, cy - 70, cx + 70, cy + 70), radius=12,
+                           fill=(10, 18, 30, 255), outline=_lighten(accent, 0.25), width=2)
+    for dy in (-20, 20):
+        draw.rounded_rectangle((cx - 46, cy + dy - 12, cx + 46, cy + dy + 12), radius=5,
+                               fill=_darken(chip, 0.05), outline=(*accent, 140), width=1)
+    _draw_chip_label(draw, cx, cy - 2, label, accent, big=34, small=16, dy=8)
+
+
+def draw_cpu_i5(draw, cx, cy, accent, chip, label):
+    """Quad-core modern IHS."""
+    s = 220
+    draw.rounded_rectangle((cx - s // 2, cy - s // 2, cx + s // 2, cy + s // 2),
+                           radius=16, fill=_darken(chip, 0.18), outline=accent, width=4)
+    draw.rounded_rectangle((cx - 78, cy - 78, cx + 78, cy + 78), radius=10,
+                           fill=(10, 18, 30, 255), outline=_lighten(accent, 0.25), width=2)
+    for dx, dy in [(-26, -26), (26, -26), (-26, 26), (26, 26)]:
+        draw.rounded_rectangle((cx + dx - 18, cy + dy - 18, cx + dx + 18, cy + dy + 18),
+                               radius=4, fill=(*chip, 255), outline=(*accent, 160), width=1)
+    _draw_chip_label(draw, cx, cy, label, accent, big=32, small=16, dy=6)
+
+
+def draw_cpu_i7(draw, cx, cy, accent, chip, label):
+    """Hexa/octa-class IHS with ring accents."""
+    s = 224
+    draw.rounded_rectangle((cx - s // 2, cy - s // 2, cx + s // 2, cy + s // 2),
+                           radius=18, fill=_darken(chip, 0.2), outline=accent, width=4)
+    draw.ellipse((cx - 86, cy - 86, cx + 86, cy + 86), fill=(10, 18, 30, 255),
+                 outline=_lighten(accent, 0.3), width=3)
+    draw.ellipse((cx - 58, cy - 58, cx + 58, cy + 58), outline=(*accent, 120), width=2)
+    for a in range(0, 360, 60):
+        import math
+        r = 72
+        x = cx + int(r * math.cos(math.radians(a)))
+        y = cy + int(r * math.sin(math.radians(a)))
+        draw.ellipse((x - 5, y - 5, x + 5, y + 5), fill=(*accent, 200))
+    _draw_chip_label(draw, cx, cy, label, accent, big=32, small=16, dy=8)
+
+
+def draw_cpu_i9(draw, cx, cy, accent, chip, label):
+    """High-core flagship with dense grid."""
+    s = 230
+    draw.rounded_rectangle((cx - s // 2, cy - s // 2, cx + s // 2, cy + s // 2),
+                           radius=16, fill=_darken(chip, 0.22), outline=accent, width=4)
+    draw.rounded_rectangle((cx - 82, cy - 82, cx + 82, cy + 82), radius=10,
+                           fill=(10, 18, 30, 255), outline=_lighten(accent, 0.3), width=2)
+    for gx in range(-2, 3):
+        for gy in range(-2, 3):
+            x, y = cx + gx * 24, cy + gy * 18 - 4
+            draw.rounded_rectangle((x - 9, y - 6, x + 9, y + 6), radius=2,
+                                   fill=(*chip, 255), outline=(*accent, 120), width=1)
+    _draw_chip_label(draw, cx, cy + 2, label, accent, big=30, small=15, dy=6)
+
+
+def draw_cpu_ryzen3(draw, cx, cy, accent, chip, label):
+    """Entry Ryzen: single CCD + I/O."""
+    w, h = 280, 230
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=14, fill=_darken(chip, 0.3), outline=accent, width=4)
+    draw.rounded_rectangle((cx - 120, cy - 70, cx - 10, cy + 70), radius=8,
+                           fill=chip, outline=_lighten(accent, 0.25), width=2)
+    draw.rounded_rectangle((cx + 10, cy - 90, cx + 120, cy + 90), radius=10,
+                           fill=_darken(chip, 0.12), outline=_lighten(accent, 0.35), width=2)
+    for y in range(cy - 70, cy + 71, 20):
+        draw.line((cx + 22, y, cx + 108, y), fill=(*accent, 110), width=1)
+    _draw_chip_label(draw, cx + 65, cy, label, accent, big=30, small=16, dy=8)
+
+
+def draw_cpu_ryzen5(draw, cx, cy, accent, chip, label):
+    """Ryzen 5: CCD and larger I/O die."""
+    w, h = 290, 235
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=14, fill=_darken(chip, 0.3), outline=accent, width=4)
+    draw.rounded_rectangle((cx - 125, cy - 55, cx - 25, cy + 55), radius=8,
+                           fill=chip, outline=_lighten(accent, 0.25), width=2)
+    draw.rounded_rectangle((cx - 125, cy + 65, cx - 25, cy + 95), radius=6,
+                           fill=_darken(chip, 0.05), outline=(*accent, 140), width=1)
+    draw.rounded_rectangle((cx + 5, cy - 95, cx + 125, cy + 95), radius=10,
+                           fill=_darken(chip, 0.12), outline=_lighten(accent, 0.35), width=2)
+    for y in range(cy - 75, cy + 76, 18):
+        draw.line((cx + 18, y, cx + 112, y), fill=(*accent, 110), width=1)
+    _draw_chip_label(draw, cx + 65, cy - 5, label, accent, big=30, small=16, dy=8)
+
+
+def draw_cpu_ryzen7(draw, cx, cy, accent, chip, label):
+    """Ryzen 7: two CCD chiplets."""
     w, h = 300, 245
-    draw.rounded_rectangle(
-        (cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
-        radius=14, fill=_darken(chip, 0.3), outline=accent, width=4,
-    )
-    for oy in (-96, 12):
-        draw.rounded_rectangle(
-            (cx - 132, cy + oy, cx - 28, cy + oy + 84),
-            radius=8, fill=chip, outline=_lighten(accent, 0.25), width=2,
-        )
-    draw.rounded_rectangle(
-        (cx - 10, cy - 96, cx + 126, cy + 96),
-        radius=10, fill=_darken(chip, 0.12),
-        outline=_lighten(accent, 0.4), width=2,
-    )
-    for oy in range(-80, 81, 20):
-        draw.line(
-            (cx + 6, cy + oy, cx + 110, cy + oy),
-            fill=(*accent, 110), width=1,
-        )
-    draw.text(
-        (cx + 58, cy - 8), label, font=load_font(30, True),
-        fill=_lighten(accent, 0.65), anchor="mm",
-    )
-    draw.text(
-        (cx + 58, cy + 30), "CPU", font=load_font(17, True),
-        fill=_lighten(accent, 0.35), anchor="mm",
-    )
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=14, fill=_darken(chip, 0.3), outline=accent, width=4)
+    for oy in (-85, 15):
+        draw.rounded_rectangle((cx - 132, cy + oy, cx - 32, cy + oy + 70), radius=8,
+                               fill=chip, outline=_lighten(accent, 0.25), width=2)
+    draw.rounded_rectangle((cx - 10, cy - 100, cx + 128, cy + 100), radius=10,
+                           fill=_darken(chip, 0.12), outline=_lighten(accent, 0.4), width=2)
+    for y in range(cy - 80, cy + 81, 20):
+        draw.line((cx + 4, y, cx + 114, y), fill=(*accent, 110), width=1)
+    _draw_chip_label(draw, cx + 59, cy, label, accent, big=30, small=16, dy=8)
 
 
-def draw_hedt_cpu(draw, cx, cy, idx, accent, chip, label):
-    """Large four-die Threadripper package."""
-    w, h = 336, 276
-    draw.rounded_rectangle(
-        (cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
-        radius=16, fill=_darken(chip, 0.32), outline=accent, width=5,
-    )
-    for dx, dy in ((-150, -120), (-30, -120), (-150, -10), (-30, -10)):
-        draw.rounded_rectangle(
-            (cx + dx, cy + dy, cx + dx + 105, cy + dy + 90),
-            radius=8, fill=chip, outline=_lighten(accent, 0.25), width=2,
-        )
-    draw.rounded_rectangle(
-        (cx + 88, cy - 120, cx + 155, cy + 80),
-        radius=10, fill=_darken(chip, 0.1),
-        outline=_lighten(accent, 0.4), width=2,
-    )
-    for oy in range(-100, 61, 20):
-        draw.line(
-            (cx + 34, cy + oy, cx + 84, cy + oy),
-            fill=(*accent, 100), width=1,
-        )
-    draw.text(
-        (cx + 121, cy - 24), label, font=load_font(32, True),
-        fill=_lighten(accent, 0.65), anchor="mm",
-    )
-    draw.text(
-        (cx + 121, cy + 18), "CPU", font=load_font(16, True),
-        fill=_lighten(accent, 0.35), anchor="mm",
-    )
+def draw_cpu_ryzen9(draw, cx, cy, accent, chip, label):
+    """Ryzen 9: two CCDs with emphasized I/O hub."""
+    w, h = 310, 250
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=14, fill=_darken(chip, 0.32), outline=accent, width=4)
+    for oy in (-98, 8):
+        draw.rounded_rectangle((cx - 138, cy + oy, cx - 34, cy + oy + 88), radius=8,
+                               fill=chip, outline=_lighten(accent, 0.3), width=2)
+        for i in range(2):
+            y = cy + oy + 22 + i * 30
+            draw.line((cx - 126, y, cx - 46, y), fill=(*accent, 90), width=1)
+    draw.rounded_rectangle((cx - 12, cy - 105, cx + 136, cy + 105), radius=10,
+                           fill=_darken(chip, 0.1), outline=_lighten(accent, 0.45), width=2)
+    draw.rounded_rectangle((cx + 8, cy - 30, cx + 116, cy + 30), radius=6,
+                           fill=(10, 18, 30, 255), outline=(*accent, 160), width=1)
+    _draw_chip_label(draw, cx + 62, cy - 2, label, accent, big=30, small=16, dy=8)
+
+
+def draw_cpu_threadripper(draw, cx, cy, accent, chip, label):
+    """Threadripper: large multi-chip module."""
+    w, h = 340, 280
+    draw.rounded_rectangle((cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2),
+                           radius=16, fill=_darken(chip, 0.32), outline=accent, width=5)
+    for dx, dy in ((-152, -122), (-28, -122), (-152, -8), (-28, -8)):
+        draw.rounded_rectangle((cx + dx, cy + dy, cx + dx + 108, cy + dy + 94), radius=8,
+                               fill=chip, outline=_lighten(accent, 0.25), width=2)
+    draw.rounded_rectangle((cx + 92, cy - 122, cx + 158, cy + 86), radius=10,
+                           fill=_darken(chip, 0.1), outline=_lighten(accent, 0.4), width=2)
+    for y in range(cy - 100, cy + 65, 18):
+        draw.line((cx + 36, y, cx + 86, y), fill=(*accent, 110), width=1)
+    for x in range(cx - 140, cx + 70, 124):
+        for y in range(cy - 110, cy - 5, 114):
+            draw.ellipse((x + 44, y + 37, x + 56, y + 49), fill=(*accent, 140))
+    _draw_chip_label(draw, cx + 125, cy - 20, label, accent, big=30, small=15, dy=6)
+
+
+_DRAW_CPU_BY_RANK = [
+    draw_cpu_286, draw_cpu_386, draw_cpu_486,
+    draw_cpu_pentium, draw_cpu_pentium2, draw_cpu_pentium3, draw_cpu_pentium4,
+    draw_cpu_core2duo, draw_cpu_i3, draw_cpu_i5, draw_cpu_i7, draw_cpu_i9,
+    draw_cpu_ryzen3, draw_cpu_ryzen5, draw_cpu_ryzen7, draw_cpu_ryzen9,
+    draw_cpu_threadripper,
+]
 
 
 def draw_cpu(draw, cx, cy, idx, accent, chip, label, family):
-    if family == "legacy":
-        draw_legacy_cpu(draw, cx, cy, idx, accent, chip, label)
-    elif family == "classic":
-        draw_classic_cpu(draw, cx, cy, idx, accent, chip, label)
-    elif family == "core":
-        draw_core_cpu(draw, cx, cy, idx, accent, chip, label)
-    elif family == "ryzen":
-        draw_ryzen_cpu(draw, cx, cy, idx, accent, chip, label)
-    else:
-        draw_hedt_cpu(draw, cx, cy, idx, accent, chip, label)
+    fn = _DRAW_CPU_BY_RANK[min(idx, len(_DRAW_CPU_BY_RANK) - 1)]
+    fn(draw, cx, cy, accent, chip, label)
 
 
 @lru_cache(maxsize=32)
@@ -1249,41 +1348,6 @@ async def user_command(message: Message):
     await message.answer(text, parse_mode="HTML")
 
 
-@dp.message(Command("aadd"), IsAdmin())
-async def aadd_command(message: Message, bot: Bot):
-    try:
-        chat_id, user_id, name, rest = resolve_admin_target(
-            message, admin_args(message)
-        )
-        if not rest:
-            raise AdminUsage(t("aadd_need_amount"))
-        amount = parse_int(rest[0], t("label_amount"))
-        if amount <= 0:
-            raise AdminUsage(t("aadd_positive"))
-    except AdminUsage as exc:
-        await admin_usage_error(message, exc)
-        return
-
-    old_count = get_messages(chat_id, user_id)
-    new_count = old_count + amount
-    if new_count > MAX_MESSAGES:
-        await admin_usage_error(
-            message,
-            AdminUsage(t("aadd_too_big", max_messages=MAX_MESSAGES)),
-        )
-        return
-    save_user(chat_id, user_id, name, new_count)
-    await message.answer(
-        t(
-            "aadd_done",
-            name=esc_name(name),
-            old=old_count,
-            new=new_count,
-            rank=html.escape(rank_name(new_count)),
-        ),
-        parse_mode="HTML",
-    )
-    await announce_rank_up(bot, chat_id, user_id, name, old_count, new_count)
 
 
 @dp.message(Command("asetrank"), IsAdmin())

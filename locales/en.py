@@ -79,7 +79,6 @@ STRINGS = {
     "admin_help": (
         "🛠 <b>CPU Evolution admin commands</b>\n\n"
         "{usage}\n\n"
-        "/aadd &lt;N&gt; — add N messages\n"
         "/asetrank &lt;number&gt; — set rank (see /ranks)\n"
         "/areset confirm — reset progress\n"
         "/agroup add|del|list — group whitelist\n\n"
@@ -111,13 +110,6 @@ STRINGS = {
         "\nUntil rank up: <b>{remaining}</b>"
     ),
     "user_max": "\n🏆 Maximum rank reached!",
-    "aadd_need_amount": "Specify the number of messages.",
-    "aadd_positive": "The number must be greater than zero.",
-    "aadd_too_big": "Too many messages (maximum {max_messages}).",
-    "aadd_done": (
-        "✅ <b>{name}</b>: {old} → <b>{new}</b> messages\n"
-        "⚙️ Rank: <b>{rank}</b>"
-    ),
     "asetrank_need": "Specify a rank number from 1 to {ranks_count}.",
     "asetrank_range": "The rank must be from 1 to {ranks_count}.",
     "asetrank_done": (

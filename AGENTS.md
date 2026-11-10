@@ -58,14 +58,13 @@ docker compose logs -f
   on counted messages. Public commands use `COMMAND_THROTTLE` (`COMMAND_COOLDOWN_SECONDS`) — do not
   add unthrottled public handlers. Use `announce_rank_up` for any count-changing path. Constants:
   `MESSAGES_PER_RANK=100`, `MAX_MESSAGES=10_000_000`, 17 `RANKS` in `ranks.py`, ≥1700 `BEYOND_RANK`,
-  progress `messages % 100`. `parse_int` rejects outside signed 64-bit; `MAX_MESSAGES` caps counters/admin adds.
+  progress `messages % 100`. `parse_int` rejects outside signed 64-bit; `MAX_MESSAGES` caps counters.
 - **Commands:** public group commands include `/profile`, `/rank`, `/user`, `/ranks`, `/top`, `/id`
-  (plus `/help`, `/start`); admin Telegram commands are `/admin`, `/aadd`, `/asetrank`, `/areset`,
-  `/agroup`. No duplicate admin/user command names. Keep handler registration before the catch-all
-  counter.
+  (plus `/help`, `/start`); admin Telegram commands are `/admin`, `/asetrank`, `/areset`, `/agroup`.
+  No duplicate admin/user command names. Keep handler registration before the catch-all counter.
 - **Ranks/cards:** `RANK_STYLES` in `bot.py` must stay parallel to `RANKS` in `ranks.py` (same
   order/length); missing style falls back to Threadripper. Rank-up cards fire on rank-boundary
-  crossings (`/aadd`, `/asetrank`, live counter); final 1700 boundary is text-only.
+  crossings (`/asetrank`, live counter); final 1700 boundary is text-only.
   `make_rank_card` is `@lru_cache(maxsize=32)` and must run via `asyncio.to_thread` (`send_rank_card`).
   Name layout (`layout_card_name`) keeps names above the counter (bottom ≈ y=352); do not hard-truncate.
 - **i18n/runtime files:** UI strings must not be hardcoded in `bot.py` — add keys to both

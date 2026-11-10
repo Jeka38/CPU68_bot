@@ -80,7 +80,6 @@ STRINGS = {
     "admin_help": (
         "🛠 <b>Админ-команды CPU Evolution</b>\n\n"
         "{usage}\n\n"
-        "/aadd &lt;N&gt; — добавить N сообщений\n"
         "/asetrank &lt;номер&gt; — выставить ранг (см. /ranks)\n"
         "/areset confirm — сбросить прогресс\n"
         "/agroup add|del|list — белый список групп\n\n"
@@ -112,13 +111,6 @@ STRINGS = {
         "\nДо повышения: <b>{remaining}</b>"
     ),
     "user_max": "\n🏆 Максимальный ранг достигнут!",
-    "aadd_need_amount": "Укажите количество сообщений.",
-    "aadd_positive": "Количество должно быть больше нуля.",
-    "aadd_too_big": "Слишком много сообщений (максимум {max_messages}).",
-    "aadd_done": (
-        "✅ <b>{name}</b>: {old} → <b>{new}</b> сообщений\n"
-        "⚙️ Ранг: <b>{rank}</b>"
-    ),
     "asetrank_need": "Укажите номер ранга от 1 до {ranks_count}.",
     "asetrank_range": "Ранг должен быть от 1 до {ranks_count}.",
     "asetrank_done": (
