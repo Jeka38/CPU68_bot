@@ -249,18 +249,30 @@ def get_last_counted_at(chat_id: int, user_id: int) -> float:
 
 
 def count_user_message(chat_id: int, user_id: int, display_name: str, now: float):
-    old_count = min(get_messages(chat_id, user_id), MAX_MESSAGES)
+    row = db.execute(
+        "SELECT messages FROM users WHERE chat_id=? AND user_id=?",
+        (chat_id, user_id),
+    ).fetchone()
+    if not row:
+        # First seen message: register/update nickname, but do not count it.
+        db.execute(
+            """
+            INSERT INTO users(chat_id, user_id, display_name, messages, last_counted_at)
+            VALUES (?, ?, ?, 0, ?)
+            """,
+            (chat_id, user_id, display_name, now),
+        )
+        db.commit()
+        return 0, 0
+    old_count = min(int(row["messages"]), MAX_MESSAGES)
     new_count = min(old_count + 1, MAX_MESSAGES)
     db.execute(
         """
-        INSERT INTO users(chat_id, user_id, display_name, messages, last_counted_at)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(chat_id, user_id) DO UPDATE SET
-            display_name=excluded.display_name,
-            messages=excluded.messages,
-            last_counted_at=excluded.last_counted_at
+        UPDATE users
+        SET display_name=?, messages=?, last_counted_at=?
+        WHERE chat_id=? AND user_id=?
         """,
-        (chat_id, user_id, display_name, new_count, now),
+        (display_name, new_count, now, chat_id, user_id),
     )
     db.commit()
     return old_count, new_count
@@ -1198,39 +1210,42 @@ async def admin_command(message: Message):
     )
 
 
-@dp.message(Command("auser"), IsAdmin())
-async def auser_command(message: Message):
-    try:
-        chat_id, user_id, _, _ = resolve_admin_target(message, admin_args(message))
-    except AdminUsage as exc:
-        await admin_usage_error(message, exc)
+@dp.message(Command("user"), ChatAllowed(), COMMAND_THROTTLE)
+async def user_command(message: Message):
+    if message.chat.type not in ("group", "supergroup"):
+        await message.answer(t("group_only"))
         return
 
-    row = get_user(chat_id, user_id)
+    target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
+    if not target or target.is_bot:
+        await message.answer(t("user_not_determined"))
+        return
+
+    row = get_user(message.chat.id, target.id)
     if not row:
         await message.answer(
-            t("auser_not_found", user_id=user_id, chat_id=chat_id),
+            t("user_not_found", user_id=target.id),
             parse_mode="HTML",
         )
         return
 
     count = int(row["messages"])
     text = t(
-        "auser_text",
+        "user_text",
         name=esc_name(row["display_name"]),
-        user_id=user_id,
+        user_id=target.id,
         rank=html.escape(rank_name(count)),
         count=count,
     )
     nxt = next_rank_name(count)
     if nxt:
         text += t(
-            "auser_next",
+            "user_next",
             next_rank=html.escape(nxt),
             remaining=MESSAGES_PER_RANK - count % MESSAGES_PER_RANK,
         )
     else:
-        text += t("auser_max")
+        text += t("user_max")
     await message.answer(text, parse_mode="HTML")
 
 
@@ -1327,30 +1342,15 @@ async def areset_command(message: Message):
     )
 
 
-@dp.message(Command("acard"), IsAdmin())
-async def acard_command(message: Message, bot: Bot):
-    try:
-        chat_id, user_id, name, _ = resolve_admin_target(
-            message, admin_args(message)
-        )
-    except AdminUsage as exc:
-        await admin_usage_error(message, exc)
-        return
-
-    count = get_messages(chat_id, user_id)
-    await send_rank_card(bot, chat_id, user_id, name, count, announce=False)
-    await message.answer(t("acard_sent"))
-
-
-@dp.message(Command("aranks"), IsAdmin())
-async def aranks_command(message: Message):
-    lines = [t("aranks_header")]
+@dp.message(Command("ranks"), ChatAllowed(), COMMAND_THROTTLE)
+async def ranks_command(message: Message):
+    lines = [t("ranks_header")]
     for i, rank in enumerate(RANKS, 1):
         low = (i - 1) * MESSAGES_PER_RANK
         high = low + MESSAGES_PER_RANK - 1
         lines.append(
             t(
-                "aranks_line",
+                "ranks_line",
                 number=i,
                 rank=html.escape(rank),
                 low=low,
@@ -1359,46 +1359,12 @@ async def aranks_command(message: Message):
         )
     lines.append(
         t(
-            "aranks_beyond",
+            "ranks_beyond",
             beyond_rank=BEYOND_RANK,
             threshold=len(RANKS) * MESSAGES_PER_RANK,
         )
     )
     await message.answer("\n".join(lines), parse_mode="HTML")
-
-
-@dp.message(Command("atop"), IsAdmin())
-async def atop_command(message: Message):
-    if message.chat.type == "private":
-        try:
-            args = admin_args(message)
-            if not args:
-                raise AdminUsage(t("admin_group_id_private"))
-            chat_id = parse_int(args[0], t("label_chat_id"))
-        except AdminUsage as exc:
-            await admin_usage_error(message, exc)
-            return
-    else:
-        chat_id = message.chat.id
-
-    rows = get_top(chat_id, 20)
-    if not rows:
-        await message.answer(t("atop_empty"))
-        return
-
-    lines = [t("atop_header", chat_id=chat_id)]
-    for place, row in enumerate(rows, start=1):
-        name = esc_name(row["display_name"])
-        lines.append(
-            t(
-                "atop_line",
-                place=place,
-                name=name,
-                rank=html.escape(rank_name(row["messages"])),
-                messages=row["messages"],
-            )
-        )
-    await message.answer(join_lines_fit(lines), parse_mode="HTML")
 
 
 @dp.message(Command("agroup"), IsAdmin())

@@ -50,14 +50,19 @@ docker compose logs -f
   only to commands.
 - **Auth/targets:** admin access = `IsAdmin()` against `ADMIN_IDS` (parsed at import; empty disables).
   In group, reply targets replied user in current chat else first arg is user ID; in private chat
-  admin commands take `<chat_id> <user_id>` (`/atop` only `<chat_id>`). `/areset` requires literal
-  `confirm`. `/help` appends admin list only in private chat to an admin.
+  admin commands take `<chat_id> <user_id>`. `/areset` requires literal `confirm`. `/help` appends
+  admin list only in private chat to an admin.
 - **Counting/ranks:** skip bots and messages whose text/caption starts with `/`. Write counts only
-  via `count_user_message` (respects `MESSAGE_COOLDOWN_SECONDS`/`last_counted_at`); public commands
-  use `COMMAND_THROTTLE` (`COMMAND_COOLDOWN_SECONDS`) — do not add unthrottled public handlers.
-  Use `announce_rank_up` for any count-changing path. Constants: `MESSAGES_PER_RANK=100`,
-  `MAX_MESSAGES=10_000_000`, 17 `RANKS` in `ranks.py`, ≥1700 `BEYOND_RANK`, progress `messages % 100`.
-  `parse_int` rejects outside signed 64-bit; `MAX_MESSAGES` caps counters/admin adds.
+  via `count_user_message` (respects `MESSAGE_COOLDOWN_SECONDS`/`last_counted_at`); the first seen
+  message registers the user (messages 0, nickname updated) and is not counted. Nickname is updated
+  on counted messages. Public commands use `COMMAND_THROTTLE` (`COMMAND_COOLDOWN_SECONDS`) — do not
+  add unthrottled public handlers. Use `announce_rank_up` for any count-changing path. Constants:
+  `MESSAGES_PER_RANK=100`, `MAX_MESSAGES=10_000_000`, 17 `RANKS` in `ranks.py`, ≥1700 `BEYOND_RANK`,
+  progress `messages % 100`. `parse_int` rejects outside signed 64-bit; `MAX_MESSAGES` caps counters/admin adds.
+- **Commands:** public group commands include `/profile`, `/rank`, `/user`, `/ranks`, `/top`, `/id`
+  (plus `/help`, `/start`); admin Telegram commands are `/admin`, `/aadd`, `/asetrank`, `/areset`,
+  `/agroup`. No duplicate admin/user command names. Keep handler registration before the catch-all
+  counter.
 - **Ranks/cards:** `RANK_STYLES` in `bot.py` must stay parallel to `RANKS` in `ranks.py` (same
   order/length); missing style falls back to Threadripper. Rank-up cards fire on rank-boundary
   crossings (`/aadd`, `/asetrank`, live counter); final 1700 boundary is text-only.
@@ -69,10 +74,11 @@ docker compose logs -f
   `locales/`; add new runtime modules to `COPY`. Linux cards use `fonts-dejavu-core`.
 - **Safety/output:** `redact_secrets` + `_RedactingFormatter` must redact bot/token-shaped strings in
   logs and error/admin reports. Captions/error reports use `parse_mode="HTML"`: use `esc_name` for
-  names and `join_lines_fit`/`tg_len` for unbounded lists; escape/truncate tracebacks in `<pre>`
-  below 4096 chars. Unhandled errors go to `ERROR_REPORT_IDS` (fallback `ADMIN_IDS`) via
-  `notify_admins` with `ERROR_NOTIFY_COOLDOWN_SECONDS` throttle; `@dp.errors()` must stay registered.
-  `run_bot()` retries polling with backoff (5s→300s). Docker is hardened (`read_only`, `/tmp` tmpfs,
-  `cap_drop: ALL`, `no-new-privileges`, limits); write only to `/data` or `/tmp`.
+  names and `join_lines_fit`/`tg_len` for unbounded lists (`/top`, `/ranks`, `/agroup list`, etc.);
+  escape/truncate tracebacks in `<pre>` below 4096 chars. Unhandled errors go to `ERROR_REPORT_IDS`
+  (fallback `ADMIN_IDS`) via `notify_admins` with `ERROR_NOTIFY_COOLDOWN_SECONDS` throttle;
+  `@dp.errors()` must stay registered. `run_bot()` retries polling with backoff (5s→300s). Docker is
+  hardened (`read_only`, `/tmp` tmpfs, `cap_drop: ALL`, `no-new-privileges`, limits); write only to
+  `/data` or `/tmp`.
 - **Telegram behavior:** user-facing text is Russian; keep new messages consistent. Privacy Mode must
   be disabled in @BotFather to receive all group messages (not retroactive).

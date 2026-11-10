@@ -20,10 +20,12 @@ STRINGS = {
         "Привет! Я CPU Evolution Bot.\n\n"
         "/profile — карточка твоего процессора\n"
         "/rank — текстовая информация о ранге\n"
+        "/user — статистика участника\n"
+        "/ranks — список рангов\n"
         "/top — рейтинг группы\n"
         "/help — все команды\n\n"
         "Чтобы посмотреть профиль другого участника, ответь на его "
-        "сообщение командой /profile."
+        "сообщение командой /profile или /user."
     ),
     "profile_group_only": "Профили пока доступны внутри группы.",
     "user_not_determined": "Не удалось определить пользователя.",
@@ -56,18 +58,17 @@ STRINGS = {
     "top_empty": "Пока статистики нет.",
     "top_header": "🏆 <b>ТОП CPU EVOLUTION</b>\n",
     "top_line": "{place}. {name} — <b>{rank}</b> ({messages} сообщений)",
-    "atop_empty": "В этом чате пока нет статистики.",
-    "atop_header": "🏆 <b>ТОП CPU EVOLUTION</b> (<code>{chat_id}</code>)\n",
-    "atop_line": "{place:2}. {name} — <b>{rank}</b> ({messages})",
     "public_help": (
         "🤖 <b>CPU Evolution Bot</b>\n\n"
         "/profile — карточка процессорного ранга\n"
         "/rank — текстовая информация о ранге\n"
+        "/user — статистика участника\n"
+        "/ranks — список рангов\n"
         "/top — топ-10 группы\n"
         "/id — Chat ID и User ID\n"
         "/help — эта справка\n\n"
-        "Профиль другого участника: ответьте на его сообщение командой /profile.\n"
-        "Профили и топ работают в группе."
+        "Профиль/статистика другого участника: ответьте на его сообщение командой /profile, /rank или /user.\n"
+        "Команды работают в группе."
     ),
 
     # --- admin commands ---
@@ -79,15 +80,10 @@ STRINGS = {
     "admin_help": (
         "🛠 <b>Админ-команды CPU Evolution</b>\n\n"
         "{usage}\n\n"
-        "/auser — статистика участника\n"
         "/aadd &lt;N&gt; — добавить N сообщений\n"
-        "/asetrank &lt;номер&gt; — выставить ранг (см. /aranks)\n"
+        "/asetrank &lt;номер&gt; — выставить ранг (см. /ranks)\n"
         "/areset confirm — сбросить прогресс\n"
-        "/acard — отправить тестовую карточку\n"
-        "/aranks — список рангов\n"
-        "/atop — топ-20 (в личке укажите chat_id)\n"
-        "/agroup add|del|list — белый список групп\n"
-        "/top — топ-10 группы\n\n"
+        "/agroup add|del|list — белый список групп\n\n"
         "В группе для /agroup add и /agroup del chat_id можно не указывать —\n"
         "будет использован текущий чат.\n\n"
         "Ваш Telegram ID: <code>{user_id}</code>"
@@ -105,20 +101,17 @@ STRINGS = {
     "label_rank_number": "Номер ранга",
     "parse_int_invalid": "{label}: нужно целое число.",
     "parse_int_too_large": "{label}: число слишком большое.",
-    "auser_not_found": (
-        "Пользователь <code>{user_id}</code> не найден в базе чата "
-        "<code>{chat_id}</code>."
-    ),
-    "auser_text": (
+    "user_not_found": "Пользователь <code>{user_id}</code> пока не найден в базе этого чата.",
+    "user_text": (
         "👤 <b>{name}</b> (<code>{user_id}</code>)\n"
         "⚙️ Ранг: <b>{rank}</b>\n"
         "📨 Сообщений: <b>{count}</b>"
     ),
-    "auser_next": (
+    "user_next": (
         "\n🚀 Следующий: <b>{next_rank}</b>"
         "\nДо повышения: <b>{remaining}</b>"
     ),
-    "auser_max": "\n🏆 Максимальный ранг достигнут!",
+    "user_max": "\n🏆 Максимальный ранг достигнут!",
     "aadd_need_amount": "Укажите количество сообщений.",
     "aadd_positive": "Количество должно быть больше нуля.",
     "aadd_too_big": "Слишком много сообщений (максимум {max_messages}).",
@@ -136,10 +129,9 @@ STRINGS = {
         "Повторите команду с <code>confirm</code>."
     ),
     "areset_done": "♻️ Прогресс сброшен: {old} → <b>0</b>.",
-    "acard_sent": "✅ Тестовая карточка отправлена.",
-    "aranks_header": "🖥 <b>Ранги CPU Evolution</b>",
-    "aranks_line": "{number:2}. {rank} — {low}-{high} сообщений",
-    "aranks_beyond": "🏆 {beyond_rank} — от {threshold} сообщений",
+    "ranks_header": "🖥 <b>Ранги CPU Evolution</b>",
+    "ranks_line": "{number:2}. {rank} — {low}-{high} сообщений",
+    "ranks_beyond": "🏆 {beyond_rank} — от {threshold} сообщений",
 
     # --- group whitelist ---
     "agroup_help": (

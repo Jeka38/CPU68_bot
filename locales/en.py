@@ -20,9 +20,11 @@ STRINGS = {
         "Hi! I am CPU Evolution Bot.\n\n"
         "/profile — your processor card\n"
         "/rank — text info about your rank\n"
+        "/user — member stats\n"
+        "/ranks — list of ranks\n"
         "/top — group top 10\n"
         "/help — all commands\n\n"
-        "To view another member's profile, reply to their message with /profile."
+        "To view another member's profile or stats, reply to their message with /profile, /rank, or /user."
     ),
     "profile_group_only": "Profiles are available in groups only.",
     "user_not_determined": "Could not determine the user.",
@@ -55,18 +57,17 @@ STRINGS = {
     "top_empty": "No stats yet.",
     "top_header": "🏆 <b>CPU EVOLUTION TOP</b>\n",
     "top_line": "{place}. {name} — <b>{rank}</b> ({messages} messages)",
-    "atop_empty": "No stats in this chat yet.",
-    "atop_header": "🏆 <b>CPU EVOLUTION TOP</b> (<code>{chat_id}</code>)\n",
-    "atop_line": "{place:2}. {name} — <b>{rank}</b> ({messages})",
     "public_help": (
         "🤖 <b>CPU Evolution Bot</b>\n\n"
         "/profile — processor rank card\n"
         "/rank — text info about your rank\n"
+        "/user — member stats\n"
+        "/ranks — list of ranks\n"
         "/top — group top 10\n"
         "/id — Chat ID and User ID\n"
         "/help — this help\n\n"
-        "Another member's profile: reply to their message with /profile.\n"
-        "Profiles and top work in groups."
+        "Another member's profile/stats: reply to their message with /profile, /rank, or /user.\n"
+        "Commands work in groups."
     ),
 
     # --- admin commands ---
@@ -78,15 +79,10 @@ STRINGS = {
     "admin_help": (
         "🛠 <b>CPU Evolution admin commands</b>\n\n"
         "{usage}\n\n"
-        "/auser — member stats\n"
         "/aadd &lt;N&gt; — add N messages\n"
-        "/asetrank &lt;number&gt; — set rank (see /aranks)\n"
+        "/asetrank &lt;number&gt; — set rank (see /ranks)\n"
         "/areset confirm — reset progress\n"
-        "/acard — send a test card\n"
-        "/aranks — list ranks\n"
-        "/atop — top 20 (in DM pass chat_id)\n"
-        "/agroup add|del|list — group whitelist\n"
-        "/top — group top 10\n\n"
+        "/agroup add|del|list — group whitelist\n\n"
         "In a group, chat_id may be omitted for /agroup add and /agroup del —\n"
         "the current chat is used.\n\n"
         "Your Telegram ID: <code>{user_id}</code>"
@@ -104,20 +100,17 @@ STRINGS = {
     "label_rank_number": "Rank number",
     "parse_int_invalid": "{label}: an integer is required.",
     "parse_int_too_large": "{label}: the number is too large.",
-    "auser_not_found": (
-        "User <code>{user_id}</code> was not found in the database of chat "
-        "<code>{chat_id}</code>."
-    ),
-    "auser_text": (
+    "user_not_found": "User <code>{user_id}</code> was not found in this chat's database yet.",
+    "user_text": (
         "👤 <b>{name}</b> (<code>{user_id}</code>)\n"
         "⚙️ Rank: <b>{rank}</b>\n"
         "📨 Messages: <b>{count}</b>"
     ),
-    "auser_next": (
+    "user_next": (
         "\n🚀 Next: <b>{next_rank}</b>"
         "\nUntil rank up: <b>{remaining}</b>"
     ),
-    "auser_max": "\n🏆 Maximum rank reached!",
+    "user_max": "\n🏆 Maximum rank reached!",
     "aadd_need_amount": "Specify the number of messages.",
     "aadd_positive": "The number must be greater than zero.",
     "aadd_too_big": "Too many messages (maximum {max_messages}).",
@@ -135,10 +128,9 @@ STRINGS = {
         "Repeat the command with <code>confirm</code>."
     ),
     "areset_done": "♻️ Progress reset: {old} → <b>0</b>.",
-    "acard_sent": "✅ Test card sent.",
-    "aranks_header": "🖥 <b>CPU Evolution ranks</b>",
-    "aranks_line": "{number:2}. {rank} — {low}-{high} messages",
-    "aranks_beyond": "🏆 {beyond_rank} — from {threshold} messages",
+    "ranks_header": "🖥 <b>CPU Evolution ranks</b>",
+    "ranks_line": "{number:2}. {rank} — {low}-{high} messages",
+    "ranks_beyond": "🏆 {beyond_rank} — from {threshold} messages",
 
     # --- group whitelist ---
     "agroup_help": (
