@@ -1,0 +1,37 @@
+services:
+  bot:
+    build:
+      context: .
+    image: cpu-evolution-bot:latest
+    container_name: cpu-evolution-bot
+    # Starts automatically after a server reboot (as long as Docker itself
+    # is enabled at boot) and after crashes.
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Overrides DB_PATH from .env: the database is stored on the host bind mount.
+      DB_PATH: /data/users.db
+    volumes:
+      - ./data:/data
+    # Hardening: the bot needs no privileges and never writes to its image.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Resource caps: card rendering is CPU/memory bound.
+    mem_limit: 512m
+    pids_limit: 256
+    # Optional stronger isolation: create ./data owned by UID 10001 first
+    #   sudo chown -R 10001:10001 data
+    # then uncomment:
+    # user: "10001:10001"
+    stop_grace_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

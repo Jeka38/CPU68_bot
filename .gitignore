@@ -1,0 +1,55 @@
+# -------------------- secrets and runtime data --------------------
+# Never commit real credentials. Only the example is tracked.
+.env
+.env.*
+!.env.example
+
+# SQLite database and its sidecar files (host bind mount ./data).
+data/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# -------------------- Python --------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# -------------------- tooling caches --------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# -------------------- editors and OS junk --------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------- local temp and logs --------------------
+*.log
+*.tmp
+*.bak
+~$*
