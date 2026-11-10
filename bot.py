@@ -991,9 +991,9 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
               fill=green_mid, anchor="rm")
 
     # Section divider and labels
-    draw.line((x1 + 20, 150, x2 - 20, 150), fill=green_dark, width=2)
-    draw.text((70, 86), "CPU EVOLUTION // STATUS", font=load_font(28, True), fill=green, anchor="lm")
-    draw.text((70, 124), t("card_rank_label"), font=load_font(18, True), fill=green_dim, anchor="lm")
+    draw.line((x1 + 20, 154, x2 - 20, 154), fill=green_dark, width=2)
+    draw.text((70, 96), "CPU EVOLUTION // STATUS", font=load_font(28, True), fill=green, anchor="lm")
+    draw.text((70, 132), t("card_rank_label"), font=load_font(18, True), fill=green_dim, anchor="lm")
 
     # Right panel for CPU art
     rx1, ry1, rx2, ry2 = 720, 168, 1128, 590
