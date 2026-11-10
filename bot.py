@@ -1029,11 +1029,12 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
     except (AttributeError, OSError):
         rank_line_height = int(getattr(rank_font, "size", 46)) + 6
     rank_spacing = rank_line_height + 2
+    left_x = 70
     for i, line in enumerate(rank_lines):
-        draw.text((70, 170 + i * rank_spacing), line, font=rank_font, fill=green)
+        draw.text((left_x, 170 + i * rank_spacing), line, font=rank_font, fill=green)
     rank_bottom = 170 + rank_line_height + rank_spacing * (len(rank_lines) - 1)
 
-    # User info
+    # User info (flow layout)
     safe_name = clean_text(display_name) or t("card_default_name")
     name_font, name_lines = layout_card_name(draw, safe_name, 620)
     try:
@@ -1043,38 +1044,49 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
         line_height = int(getattr(name_font, "size", 27)) + 6
     spacing = line_height + 4
     block_height = line_height + spacing * (len(name_lines) - 1)
-    name_top = 272 if len(name_lines) == 1 else 330 - block_height
-    min_top = rank_bottom + 8
-    if name_top < min_top:
-        name_top = min(min_top, 330 - block_height)
-    draw.text((70, name_top - 24), "USER:", font=load_font(16, True), fill=green_dim)
+
+    y = rank_bottom + 18
+    draw.text((left_x, y), "USER:", font=load_font(16, True), fill=green_dim)
+    y += 22
     for i, line in enumerate(name_lines):
-        draw.text((70, name_top + i * spacing), line, font=name_font, fill=text_main)
-    draw.text((70, 350), t("card_messages", messages=f"{messages:,}".replace(",", " ")),
+        draw.text((left_x, y + i * spacing), line, font=name_font, fill=text_main)
+    y += block_height + 14
+    draw.text((left_x, y), t("card_messages", messages=f"{messages:,}".replace(",", " ")),
               font=load_font(24, True), fill=green_mid)
+    y += 38
 
     # Progress
-    draw.text((70, 410), t("card_progress_label"), font=load_font(16, True), fill=green_dim)
-    bar_x1, bar_y1, bar_x2, bar_y2 = 70, 442, 690, 468
+    draw.text((left_x, y), t("card_progress_label"), font=load_font(16, True), fill=green_dim)
+    y += 28
+    bar_x1, bar_y1, bar_x2, bar_y2 = left_x, y, 690, y + 26
     draw.rectangle((bar_x1, bar_y1, bar_x2, bar_y2), fill=(6, 22, 10, 255), outline=green_dim, width=2)
     inner_w = bar_x2 - bar_x1 - 8
-    fill_w = int(inner_w * progress / 100)
+    fill_w = int(inner_w * max(0, min(progress, 100)) / 100)
     if fill_w > 0:
         # segmented Pip-Boy bar
-        seg_w = 10
+        seg_w = 12
         gap = 3
         x = bar_x1 + 4
-        while x < bar_x1 + 4 + fill_w:
-            sx2 = min(x + seg_w, bar_x1 + 4 + fill_w)
-            draw.rectangle((x, bar_y1 + 4, sx2, bar_y2 - 4), fill=green)
+        end_x = bar_x1 + 4 + fill_w
+        while x < end_x:
+            sx2 = min(x + seg_w, end_x)
+            if sx2 > x:
+                draw.rectangle((x, bar_y1 + 4, sx2, bar_y2 - 4), fill=green)
             x += seg_w + gap
+        # ensure visible fill for small non-zero progress
+        if fill_w < 4:
+            draw.rectangle((bar_x1 + 4, bar_y1 + 4, bar_x1 + 4 + fill_w, bar_y2 - 4), fill=green)
+    draw.text((bar_x2 + 12, (bar_y1 + bar_y2) // 2), f"{progress}%",
+              font=load_font(16, True), fill=green_mid, anchor="lm")
+    y += 40
     progress_line = (
         t("card_next", progress=progress, next_rank=next_rank)
         if next_rank
         else t("card_max", progress=progress)
     )
-    draw.text((70, 486), progress_line, font=load_font(18, True), fill=green_mid)
-    draw.text((70, 520), t("card_footer"), font=load_font(15, True), fill=green_dim)
+    draw.text((left_x, y), progress_line, font=load_font(18, True), fill=green_mid)
+    y += 28
+    draw.text((left_x, y), t("card_footer"), font=load_font(15, True), fill=green_dim)
 
     # Footer status line
     draw.line((x1 + 20, y2 - 38, x2 - 20, y2 - 38), fill=green_dark, width=2)
