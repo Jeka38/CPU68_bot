@@ -892,16 +892,30 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
     draw.text((105, 157), t("card_rank_label"), font=load_font(20, True),
               fill=(145, 165, 190, 255))
     rank_text = current_rank.upper()
-    rank_font = load_font(47, True)
     max_rank_width = 540
-    for size in (47, 42, 37, 32, 27):
+    rank_lines = [rank_text]
+    rank_font = load_font(47, True)
+    for size, max_lines in ((47, 1), (42, 2), (36, 2), (32, 2), (28, 2)):
         rank_font = load_font(size, True)
-        if draw.textlength(rank_text, font=rank_font) <= max_rank_width:
+        lines = _wrap_lines(draw, rank_text, rank_font, max_rank_width)
+        if len(lines) <= max_lines:
+            rank_lines = lines
             break
+        rank_lines = lines
     else:
-        rank_text = _ellipsize(draw, rank_text, rank_font, max_rank_width)
-    draw.text((105, 205), rank_text, font=rank_font,
-              fill=(245, 249, 255, 255))
+        if len(rank_lines) > 2:
+            rank_lines = rank_lines[:1] + [" ".join(rank_lines[1:])]
+        rank_lines = [_ellipsize(draw, line, rank_font, max_rank_width) for line in rank_lines]
+    try:
+        r_ascent, r_descent = rank_font.getmetrics()
+        rank_line_height = r_ascent + r_descent
+    except (AttributeError, OSError):
+        rank_line_height = int(getattr(rank_font, "size", 47)) + 6
+    rank_spacing = rank_line_height + 2
+    for i, line in enumerate(rank_lines):
+        draw.text((105, 205 + i * rank_spacing), line, font=rank_font,
+                  fill=(245, 249, 255, 255))
+    rank_bottom = 205 + rank_line_height + rank_spacing * (len(rank_lines) - 1)
 
     safe_name = clean_text(display_name) or t("card_default_name")
     name_font, name_lines = layout_card_name(draw, safe_name, 540)
@@ -913,8 +927,11 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
     spacing = line_height + 4
     block_height = line_height + spacing * (len(name_lines) - 1)
     # Single-line names keep their usual place; longer names grow upwards so
-    # they never collide with the message counter underneath.
+    # they never collide with the message counter underneath. Keep clear of rank.
     name_top = 300 if len(name_lines) == 1 else 352 - block_height
+    min_top = rank_bottom + 6
+    if name_top < min_top:
+        name_top = min(min_top, 352 - block_height)
     for i, line in enumerate(name_lines):
         draw.text((108, name_top + i * spacing), line, font=name_font,
                   fill=(196, 216, 236, 255))
