@@ -57,8 +57,8 @@ docker compose logs -f
   message registers the user (messages 0, nickname updated) and is not counted. Nickname is updated
   on counted messages. Public commands use `COMMAND_THROTTLE` (`COMMAND_COOLDOWN_SECONDS`) — do not
   add unthrottled public handlers. Use `announce_rank_up` for any count-changing path. Constants:
-  `MESSAGES_PER_RANK=100`, `MAX_MESSAGES=10_000_000`, `RANKS` in `ranks.py` (currently 55), messages
-  `>= len(RANKS) * MESSAGES_PER_RANK` are `BEYOND_RANK`, progress `messages % 100`. `parse_int`
+  `MESSAGES_PER_RANK` from env (default 100, min 1), `MAX_MESSAGES=10_000_000`, `RANKS` in `ranks.py`
+  (currently 55), messages `>= len(RANKS) * MESSAGES_PER_RANK` are `BEYOND_RANK`, progress `messages % MESSAGES_PER_RANK`. `parse_int`
   rejects outside signed 64-bit; `MAX_MESSAGES` caps counters.
 - **Commands:** public group commands include `/profile`, `/user`, `/ranks`, `/top`, `/id` (plus
   `/help`, `/start`); admin Telegram commands are `/admin`, `/asetrank`, `/areset`, `/agroup`. No

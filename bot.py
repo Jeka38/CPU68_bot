@@ -87,7 +87,15 @@ if not DB_PATH.is_absolute():
     DB_PATH = Path(__file__).resolve().parent / DB_PATH
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-MESSAGES_PER_RANK = 100
+def env_int(name: str, default: int, minimum: int = 0) -> int:
+    try:
+        value = int(os.getenv(name, str(default)).strip())
+    except ValueError:
+        return default
+    return max(minimum, value)
+
+
+MESSAGES_PER_RANK = env_int("MESSAGES_PER_RANK", 100, minimum=1)
 # Hard cap for message counters. Prevents int overflow in SQLite and absurd values.
 MAX_MESSAGES = 10_000_000
 # Anti-spam: minimum seconds between counted messages / public commands per user.
@@ -114,7 +122,7 @@ for _root_handler in logging.getLogger().handlers:
     )
 logger = logging.getLogger("cpu_evolution")
 
-# Rank 1 is Intel 286 (0-99 messages), rank 2 is Intel 386 (100-199), etc.
+# Rank N starts at (N - 1) * MESSAGES_PER_RANK messages.
 # The CPU names live in ranks.py; RANK_STYLES below must stay in sync with it.
 
 # One visual theme per rank, in the same order as RANKS:
