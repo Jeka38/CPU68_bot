@@ -275,7 +275,8 @@ def next_rank_name(messages: int):
 def progress_percent(messages: int) -> int:
     if messages >= len(RANKS) * MESSAGES_PER_RANK:
         return 100
-    return (messages % MESSAGES_PER_RANK)
+    current = messages % MESSAGES_PER_RANK
+    return int(current * 100 / MESSAGES_PER_RANK) if MESSAGES_PER_RANK else 100
 
 
 def get_messages(chat_id: int, user_id: int) -> int:

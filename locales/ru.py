@@ -12,7 +12,7 @@ STRINGS = {
     "card_progress_label": "ПРОГРЕСС ЭВОЛЮЦИИ",
     "card_next": "{progress}%  |  ДАЛЕЕ: {next_rank}",
     "card_max": "{progress}%  |  МАКСИМАЛЬНЫЙ РАНГ",
-    "card_footer": "100 СООБЩЕНИЙ = 1 ЭВОЛЮЦИЯ",
+    "card_footer": "{step} СООБЩЕНИЙ = 1 ЭВОЛЮЦИЯ",
     "card_default_name": "Пользователь Telegram",
 
     # --- public commands ---
