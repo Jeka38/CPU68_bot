@@ -573,6 +573,61 @@ def _darken(color, amount: float):
     return tuple(max(0, int(c * (1 - amount))) for c in color)
 
 
+def _wrap_lines(draw, text: str, font, max_width: int) -> list[str]:
+    """Greedy word wrap; words wider than the line are split by characters."""
+    words: list[str] = []
+    for word in text.split():
+        while draw.textlength(word, font=font) > max_width and len(word) > 1:
+            cut = len(word) - 1
+            while cut > 1 and draw.textlength(word[:cut], font=font) > max_width:
+                cut -= 1
+            words.append(word[:cut])
+            word = word[cut:]
+        words.append(word)
+
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        candidate = f"{current} {word}" if current else word
+        if current and draw.textlength(candidate, font=font) > max_width:
+            lines.append(current)
+            current = word
+        else:
+            current = candidate
+    if current:
+        lines.append(current)
+    return lines
+
+
+def _ellipsize(draw, line: str, font, max_width: int) -> str:
+    """Trim a line to max_width, appending '...' when text was dropped."""
+    if draw.textlength(line, font=font) <= max_width:
+        return line
+    while line and draw.textlength(line + "...", font=font) > max_width:
+        line = line[:-1]
+    line = line.rstrip()
+    return f"{line}..." if line else "..."
+
+
+def layout_card_name(draw, text: str, max_width: int):
+    """Fit a display name into 1-3 lines, shrinking the font only if needed.
+
+    Returns ``(font, lines)``. Names that still overflow at the smallest size
+    are capped at three lines and the remainder is replaced with an ellipsis.
+    """
+    overflow = None
+    for size, max_lines in ((27, 1), (25, 2), (22, 3)):
+        font = load_font(size, True)
+        lines = _wrap_lines(draw, text, font, max_width)
+        if len(lines) <= max_lines:
+            return font, lines
+        overflow = (font, lines)
+    font, lines = overflow
+    if len(lines) > 3:
+        lines = lines[:2] + [" ".join(lines[2:])]
+    return font, [_ellipsize(draw, line, font, max_width) for line in lines]
+
+
 def draw_legacy_cpu(draw, cx, cy, idx, accent, chip, label):
     """Ceramic package with gold pins (286 / 386 / 486)."""
     half = 76 + idx * 5
@@ -840,10 +895,20 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
               fill=(245, 249, 255, 255))
 
     safe_name = clean_text(display_name) or t("card_default_name")
-    if len(safe_name) > 28:
-        safe_name = safe_name[:25] + "..."
-    draw.text((108, 300), safe_name, font=load_font(27, True),
-              fill=(196, 216, 236, 255))
+    name_font, name_lines = layout_card_name(draw, safe_name, 540)
+    try:
+        ascent, descent = name_font.getmetrics()
+        line_height = ascent + descent
+    except (AttributeError, OSError):
+        line_height = int(getattr(name_font, "size", 27)) + 6
+    spacing = line_height + 4
+    block_height = line_height + spacing * (len(name_lines) - 1)
+    # Single-line names keep their usual place; longer names grow upwards so
+    # they never collide with the message counter underneath.
+    name_top = 300 if len(name_lines) == 1 else 352 - block_height
+    for i, line in enumerate(name_lines):
+        draw.text((108, name_top + i * spacing), line, font=name_font,
+                  fill=(196, 216, 236, 255))
     draw.text(
         (108, 365),
         t("card_messages", messages=f"{messages:,}".replace(",", " ")),

@@ -113,6 +113,10 @@ docker compose logs -f
   `asyncio.to_thread` (see `send_rank_card`): rendering is CPU-bound and blocks the
   event loop. The gradient is drawn at low resolution and upscaled; do not reintroduce
   a per-pixel loop over 1200x675.
+- Card names are laid out by `layout_card_name`: one line at 27 px, otherwise wrapped
+  to 2-3 lines at 25/22 px. Keep the name block above the message counter
+  (bottom ≈ y=352) so long names never overlap it; three lines start at y≈266 and must
+  stay below the rank title. Do not hard-truncate names with a 28-character slice.
 - Unhandled update errors go to `ERROR_REPORT_IDS` (fallback `ADMIN_IDS`) via
   `notify_admins`; the `@dp.errors()` handler must stay registered. Identical errors
   are throttled by `ERROR_NOTIFY_COOLDOWN_SECONDS` (default 300).
