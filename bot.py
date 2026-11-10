@@ -991,9 +991,9 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
               fill=green_mid, anchor="rm")
 
     # Section divider and labels
-    draw.line((x1 + 20, 154, x2 - 20, 154), fill=green_dark, width=2)
-    draw.text((70, 96), "CPU EVOLUTION // STATUS", font=load_font(28, True), fill=green, anchor="lm")
-    draw.text((70, 132), t("card_rank_label"), font=load_font(18, True), fill=green_dim, anchor="lm")
+    draw.line((x1 + 20, 160, x2 - 20, 160), fill=green_dark, width=2)
+    draw.text((70, 110), "CPU EVOLUTION // STATUS", font=load_font(28, True), fill=green, anchor="lm")
+    draw.text((70, 140), t("card_rank_label"), font=load_font(18, True), fill=green_dim, anchor="lm")
 
     # Right panel for CPU art
     rx1, ry1, rx2, ry2 = 720, 168, 1128, 590
@@ -1030,9 +1030,10 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
         rank_line_height = int(getattr(rank_font, "size", 46)) + 6
     rank_spacing = rank_line_height + 2
     left_x = 70
+    rank_top = 178
     for i, line in enumerate(rank_lines):
-        draw.text((left_x, 170 + i * rank_spacing), line, font=rank_font, fill=green)
-    rank_bottom = 170 + rank_line_height + rank_spacing * (len(rank_lines) - 1)
+        draw.text((left_x, rank_top + i * rank_spacing), line, font=rank_font, fill=green)
+    rank_bottom = rank_top + rank_line_height + rank_spacing * (len(rank_lines) - 1)
 
     # User info (flow layout)
     safe_name = clean_text(display_name) or t("card_default_name")
