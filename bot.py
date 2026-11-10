@@ -891,7 +891,16 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
     )
     draw.text((105, 157), t("card_rank_label"), font=load_font(20, True),
               fill=(145, 165, 190, 255))
-    draw.text((105, 205), current_rank.upper(), font=load_font(47, True),
+    rank_text = current_rank.upper()
+    rank_font = load_font(47, True)
+    max_rank_width = 540
+    for size in (47, 42, 37, 32, 27):
+        rank_font = load_font(size, True)
+        if draw.textlength(rank_text, font=rank_font) <= max_rank_width:
+            break
+    else:
+        rank_text = _ellipsize(draw, rank_text, rank_font, max_rank_width)
+    draw.text((105, 205), rank_text, font=rank_font,
               fill=(245, 249, 255, 255))
 
     safe_name = clean_text(display_name) or t("card_default_name")
