@@ -934,79 +934,85 @@ def draw_cpu(draw, cx, cy, idx, accent, chip, label, family):
 
 @lru_cache(maxsize=32)
 def make_rank_card(display_name: str, messages: int) -> bytes:
-    """Create a shareable 1200x675 CPU-themed profile/rank card.
+    """Create a shareable 1200x675 Pip-Boy styled profile/rank card.
 
-    Cached: repeated /profile calls for the same user are free. The gradient is
-    rendered at low resolution and scaled up to keep generation cheap.
+    Cached: repeated /profile calls for the same user are free.
     """
     W, H = 1200, 675
 
     idx = rank_index(messages)
-    accent, chip_color, chip_label, family = RANK_STYLES[
-        min(idx, len(RANK_STYLES) - 1)
-    ]
+    _, _, chip_label, family = RANK_STYLES[min(idx, len(RANK_STYLES) - 1)]
     current_rank = rank_name(messages)
     next_rank = next_rank_name(messages)
     progress = progress_percent(messages)
 
-    # Per-rank tinted gradient background (low-res loop, then smooth upscale).
-    scale = 8
-    grad_w, grad_h = W // scale, H // scale
-    small = Image.new("RGB", (grad_w, grad_h), (9, 15, 29))
-    small_px = small.load()
-    for gy in range(grad_h):
-        y = gy * scale
-        for gx in range(grad_w):
-            x = gx * scale
-            glow = max(0, 1 - (((x - 920) / 750) ** 2 + ((y - 300) / 650) ** 2))
-            small_px[gx, gy] = (
-                9 + int(accent[0] * 0.16 * glow),
-                15 + int(accent[1] * 0.16 * glow),
-                29 + int(accent[2] * 0.16 * glow),
-            )
-    img = small.resize((W, H), Image.Resampling.BILINEAR)
+    # Pip-Boy phosphor palette
+    bg = (8, 18, 8)
+    bg2 = (14, 28, 14)
+    green = (51, 255, 102)
+    green_mid = (36, 190, 78)
+    green_dim = (22, 120, 50)
+    green_dark = (12, 60, 28)
+    text_main = green
+    text_dim = green_mid
+    accent = green
+    chip_color = (10, 40, 18)
 
+    img = Image.new("RGB", (W, H), bg)
     draw = ImageDraw.Draw(img, "RGBA")
 
-    # Subtle circuit-board grid in the rank colour.
-    for x in range(40, W, 48):
-        draw.line((x, 0, x, H), fill=(*accent, 20), width=1)
-    for y in range(30, H, 48):
-        draw.line((0, y, W, y), fill=(*accent, 20), width=1)
+    # CRT background glow / vignette bands
+    for y in range(H):
+        shade = int(8 + 10 * (1 - abs(y - H / 2) / (H / 2)))
+        draw.line((0, y, W, y), fill=(shade // 2, shade, shade // 2, 255))
 
-    # Accent stripe and panel.
-    draw.rounded_rectangle(
-        (54, 48, 1146, 627), radius=32,
-        fill=(12, 24, 43, 238), outline=(*accent, 150), width=2,
-    )
-    draw.rounded_rectangle((54, 48, 68, 627), radius=7, fill=(*accent, 255))
+    # Scanlines
+    for y in range(0, H, 3):
+        draw.line((0, y, W, y), fill=(0, 0, 0, 55))
 
-    # Rank-specific CPU illustration.
-    cx, cy = 865, 315
-    draw_cpu(draw, cx, cy, idx, accent, chip_color, chip_label, family)
-    draw.text(
-        (cx, cy + 196), t("card_gen", number=idx + 1), font=load_font(22, True),
-        fill=_lighten(accent, 0.55), anchor="mm",
-    )
+    # Main Pip-Boy frame
+    x1, y1, x2, y2 = 40, 34, 1160, 641
+    draw.rectangle((x1, y1, x2, y2), outline=green_mid, width=3)
+    draw.rectangle((x1 + 6, y1 + 6, x2 - 6, y2 - 6), outline=green_dark, width=2)
 
-    # Large rank number watermark.
-    draw.text(
-        (1128, 610), f"{idx + 1:02d}", font=load_font(76, True),
-        fill=(*accent, 30), anchor="rs",
-    )
+    # Corner brackets
+    bl = 34
+    for cx, cy, dx, dy in [
+        (x1, y1, 1, 1), (x2, y1, -1, 1), (x1, y2, 1, -1), (x2, y2, -1, -1)
+    ]:
+        draw.line((cx, cy, cx + dx * bl, cy), fill=green, width=4)
+        draw.line((cx, cy, cx, cy + dy * bl), fill=green, width=4)
 
-    # Text content.
-    draw.text(
-        (105, 92), "CPU EVOLUTION", font=load_font(27, True),
-        fill=(*_lighten(accent, 0.45), 255),
-    )
-    draw.text((105, 157), t("card_rank_label"), font=load_font(20, True),
-              fill=(145, 165, 190, 255))
+    # Header strip
+    draw.rectangle((x1 + 10, y1 + 10, x2 - 10, y1 + 58), fill=(10, 34, 16, 230), outline=green_dim, width=2)
+    draw.text((x1 + 24, y1 + 34), "ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL", font=load_font(18, True),
+              fill=green_dim, anchor="lm")
+    draw.text((x2 - 24, y1 + 34), f"LVL {idx + 1:02d}", font=load_font(22, True),
+              fill=green_mid, anchor="rm")
+
+    # Section divider and labels
+    draw.line((x1 + 20, 150, x2 - 20, 150), fill=green_dark, width=2)
+    draw.text((70, 86), "CPU EVOLUTION // STATUS", font=load_font(28, True), fill=green, anchor="lm")
+    draw.text((70, 124), t("card_rank_label"), font=load_font(18, True), fill=green_dim, anchor="lm")
+
+    # Right panel for CPU art
+    rx1, ry1, rx2, ry2 = 720, 168, 1128, 590
+    draw.rectangle((rx1, ry1, rx2, ry2), fill=(8, 26, 12, 220), outline=green_dim, width=2)
+    draw.text((rx1 + 16, ry1 + 18), "HARDWARE MODULE", font=load_font(18, True), fill=green_mid, anchor="lm")
+    draw.line((rx1 + 10, ry1 + 40, rx2 - 10, ry1 + 40), fill=green_dark, width=2)
+
+    # Rank-specific CPU illustration (Pip-Boy colors)
+    cx, cy = (rx1 + rx2) // 2, (ry1 + ry2) // 2 + 10
+    draw_cpu(draw, cx, cy, idx, green_mid, chip_color, chip_label, family)
+    draw.text((cx, ry2 - 24), t("card_gen", number=idx + 1), font=load_font(20, True),
+              fill=green_mid, anchor="mm")
+
+    # Rank text
     rank_text = current_rank.upper()
-    max_rank_width = 540
+    max_rank_width = 620
     rank_lines = [rank_text]
-    rank_font = load_font(47, True)
-    for size, max_lines in ((47, 1), (42, 2), (36, 2), (32, 2), (28, 2)):
+    rank_font = load_font(46, True)
+    for size, max_lines in ((46, 1), (40, 2), (34, 2), (30, 2), (26, 2)):
         rank_font = load_font(size, True)
         lines = _wrap_lines(draw, rank_text, rank_font, max_rank_width)
         if len(lines) <= max_lines:
@@ -1021,15 +1027,15 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
         r_ascent, r_descent = rank_font.getmetrics()
         rank_line_height = r_ascent + r_descent
     except (AttributeError, OSError):
-        rank_line_height = int(getattr(rank_font, "size", 47)) + 6
+        rank_line_height = int(getattr(rank_font, "size", 46)) + 6
     rank_spacing = rank_line_height + 2
     for i, line in enumerate(rank_lines):
-        draw.text((105, 205 + i * rank_spacing), line, font=rank_font,
-                  fill=(245, 249, 255, 255))
-    rank_bottom = 205 + rank_line_height + rank_spacing * (len(rank_lines) - 1)
+        draw.text((70, 170 + i * rank_spacing), line, font=rank_font, fill=green)
+    rank_bottom = 170 + rank_line_height + rank_spacing * (len(rank_lines) - 1)
 
+    # User info
     safe_name = clean_text(display_name) or t("card_default_name")
-    name_font, name_lines = layout_card_name(draw, safe_name, 540)
+    name_font, name_lines = layout_card_name(draw, safe_name, 620)
     try:
         ascent, descent = name_font.getmetrics()
         line_height = ascent + descent
@@ -1037,41 +1043,49 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
         line_height = int(getattr(name_font, "size", 27)) + 6
     spacing = line_height + 4
     block_height = line_height + spacing * (len(name_lines) - 1)
-    # Single-line names keep their usual place; longer names grow upwards so
-    # they never collide with the message counter underneath. Keep clear of rank.
-    name_top = 300 if len(name_lines) == 1 else 352 - block_height
-    min_top = rank_bottom + 6
+    name_top = 272 if len(name_lines) == 1 else 330 - block_height
+    min_top = rank_bottom + 8
     if name_top < min_top:
-        name_top = min(min_top, 352 - block_height)
+        name_top = min(min_top, 330 - block_height)
+    draw.text((70, name_top - 24), "USER:", font=load_font(16, True), fill=green_dim)
     for i, line in enumerate(name_lines):
-        draw.text((108, name_top + i * spacing), line, font=name_font,
-                  fill=(196, 216, 236, 255))
-    draw.text(
-        (108, 365),
-        t("card_messages", messages=f"{messages:,}".replace(",", " ")),
-        font=load_font(25, True),
-        fill=(*_lighten(accent, 0.35), 255),
-    )
+        draw.text((70, name_top + i * spacing), line, font=name_font, fill=text_main)
+    draw.text((70, 350), t("card_messages", messages=f"{messages:,}".replace(",", " ")),
+              font=load_font(24, True), fill=green_mid)
 
-    # Progress bar.
-    draw.text((108, 440), t("card_progress_label"), font=load_font(17, True),
-              fill=(145, 165, 190, 255))
-    bar_x1, bar_y1, bar_x2, bar_y2 = 108, 476, 650, 497
-    draw.rounded_rectangle((bar_x1, bar_y1, bar_x2, bar_y2),
-                           radius=10, fill=(35, 51, 72, 255))
-    fill_x = bar_x1 + int((bar_x2 - bar_x1) * progress / 100)
-    if fill_x > bar_x1:
-        draw.rounded_rectangle((bar_x1, bar_y1, fill_x, bar_y2),
-                               radius=10, fill=(*accent, 255))
+    # Progress
+    draw.text((70, 410), t("card_progress_label"), font=load_font(16, True), fill=green_dim)
+    bar_x1, bar_y1, bar_x2, bar_y2 = 70, 442, 690, 468
+    draw.rectangle((bar_x1, bar_y1, bar_x2, bar_y2), fill=(6, 22, 10, 255), outline=green_dim, width=2)
+    inner_w = bar_x2 - bar_x1 - 8
+    fill_w = int(inner_w * progress / 100)
+    if fill_w > 0:
+        # segmented Pip-Boy bar
+        seg_w = 10
+        gap = 3
+        x = bar_x1 + 4
+        while x < bar_x1 + 4 + fill_w:
+            sx2 = min(x + seg_w, bar_x1 + 4 + fill_w)
+            draw.rectangle((x, bar_y1 + 4, sx2, bar_y2 - 4), fill=green)
+            x += seg_w + gap
     progress_line = (
         t("card_next", progress=progress, next_rank=next_rank)
         if next_rank
         else t("card_max", progress=progress)
     )
-    draw.text((108, 523), progress_line,
-              font=load_font(18, True), fill=(205, 220, 235, 255))
-    draw.text((108, 582), t("card_footer"),
-              font=load_font(16, True), fill=(100, 130, 160, 255))
+    draw.text((70, 486), progress_line, font=load_font(18, True), fill=green_mid)
+    draw.text((70, 520), t("card_footer"), font=load_font(15, True), fill=green_dim)
+
+    # Footer status line
+    draw.line((x1 + 20, y2 - 38, x2 - 20, y2 - 38), fill=green_dark, width=2)
+    draw.text((x1 + 24, y2 - 20), "STATUS: ONLINE", font=load_font(15, True), fill=green_dim, anchor="lm")
+    draw.text((x2 - 24, y2 - 20), "VAULT-TEC CPU DIVISION", font=load_font(15, True), fill=green_dim, anchor="rm")
+
+    # Extra CRT noise dots (subtle)
+    for i in range(0, W * H, 9000):
+        px = (i * 37) % W
+        py = (i * 53) % H
+        draw.point((px, py), fill=(60, 255, 110, 18))
 
     output = io.BytesIO()
     img.save(output, format="PNG", optimize=True)
