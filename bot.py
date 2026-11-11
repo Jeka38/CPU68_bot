@@ -527,12 +527,13 @@ def _error_message(header: str, exc: BaseException) -> str:
     return redact_secrets(f"{header}<pre>{body}</pre>")
 
 
-BOT_MESSAGE_TTL = 10
+BOT_COMMAND_TTL = 10
+BOT_REPLY_TTL = 60
 
 
-def schedule_delete(bot: Bot, chat_id: int, message_id: int, delay: int = BOT_MESSAGE_TTL):
-    # Do not auto-delete bot messages sent to admins in private messages.
-    if chat_id > 0 and chat_id in (ERROR_REPORT_IDS | ADMIN_IDS):
+def schedule_delete(bot: Bot, chat_id: int, message_id: int, delay: int = BOT_REPLY_TTL):
+    # Do not auto-delete messages in private chats.
+    if chat_id > 0:
         return
 
     async def _job():
@@ -548,21 +549,21 @@ def schedule_delete(bot: Bot, chat_id: int, message_id: int, delay: int = BOT_ME
 async def answer_and_expire(message: Message, *args, **kwargs):
     sent = await message.answer(*args, **kwargs)
     if sent:
-        schedule_delete(sent.bot, sent.chat.id, sent.message_id)
+        schedule_delete(sent.bot, sent.chat.id, sent.message_id, delay=BOT_REPLY_TTL)
     return sent
 
 
 async def send_photo_and_expire(bot: Bot, **kwargs):
     sent = await bot.send_photo(**kwargs)
     if sent:
-        schedule_delete(bot, sent.chat.id, sent.message_id)
+        schedule_delete(bot, sent.chat.id, sent.message_id, delay=BOT_REPLY_TTL)
     return sent
 
 
 async def send_message_and_expire(bot: Bot, **kwargs):
     sent = await bot.send_message(**kwargs)
     if sent:
-        schedule_delete(bot, sent.chat.id, sent.message_id)
+        schedule_delete(bot, sent.chat.id, sent.message_id, delay=BOT_REPLY_TTL)
     return sent
 
 
