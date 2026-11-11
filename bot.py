@@ -547,6 +547,7 @@ def schedule_delete(bot: Bot, chat_id: int, message_id: int, delay: int = BOT_RE
 
 
 async def answer_and_expire(message: Message, *args, **kwargs):
+    kwargs.setdefault("reply_to_message_id", message.message_id)
     sent = await message.answer(*args, **kwargs)
     if sent:
         schedule_delete(sent.bot, sent.chat.id, sent.message_id, delay=BOT_REPLY_TTL)
