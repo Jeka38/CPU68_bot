@@ -7,6 +7,8 @@ import random
 import re
 import sqlite3
 import sys
+import tarfile
+import tempfile
 import time
 import traceback
 from functools import lru_cache
@@ -14,7 +16,7 @@ from pathlib import Path
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import BaseFilter, Command
-from aiogram.types import BufferedInputFile, ErrorEvent, Message
+from aiogram.types import BufferedInputFile, ErrorEvent, FSInputFile, Message
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
 
@@ -252,6 +254,122 @@ ALLOWED_CHATS = {
 def is_chat_allowed(chat_id: int) -> bool:
     """Only groups explicitly added to the whitelist are served."""
     return chat_id in ALLOWED_CHATS
+
+
+# -------------------- SETTINGS / BACKUP --------------------
+
+
+def get_setting(key: str, default: str | None = None) -> str | None:
+    row = db.execute(
+        "SELECT value FROM settings WHERE key=?", (key,)
+    ).fetchone()
+    return row["value"] if row else default
+
+
+def set_setting(key: str, value: str) -> None:
+    db.execute(
+        "INSERT INTO settings(key, value) VALUES (?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        (key, value),
+    )
+    db.commit()
+
+
+def _backup_enabled() -> bool:
+    return get_setting("backup_enabled", "0") == "1"
+
+
+def _backup_interval_seconds() -> float:
+    try:
+        hours = float(get_setting("backup_interval_hours", "24") or "24")
+    except ValueError:
+        hours = 24.0
+    return max(1.0, hours) * 3600.0
+
+
+def create_backup_archive() -> str:
+    """Create a tar.gz with bot files and database; return temp file path."""
+    ts = time.strftime("%Y%m%d-%H%M%S")
+    fd, out_path = tempfile.mkstemp(prefix=f"cpu68-backup-{ts}-", suffix=".tar.gz")
+    os.close(fd)
+    root = Path(__file__).resolve().parent
+    include_names = {
+        "bot.py", "ranks.py", "i18n.py", "requirements.txt",
+        "Dockerfile", "docker-compose.yml", ".env.example",
+        ".dockerignore", ".gitignore", "README.txt", "AGENTS.md",
+    }
+    include_dirs = {"locales"}
+    with tarfile.open(out_path, "w:gz") as tar:
+        # Database files
+        for p in [DB_PATH, Path(str(DB_PATH) + "-wal"), Path(str(DB_PATH) + "-shm")]:
+            try:
+                if p.exists():
+                    tar.add(p, arcname=f"data/{p.name}")
+            except Exception:
+                pass
+        # Bot/source files (no .env, no secrets)
+        for name in sorted(include_names):
+            p = root / name
+            if p.is_file():
+                tar.add(p, arcname=f"app/{name}")
+        for dname in sorted(include_dirs):
+            p = root / dname
+            if p.is_dir():
+                tar.add(p, arcname=f"app/{dname}")
+    return out_path
+
+
+async def send_backup(bot: Bot, manual: bool = False) -> tuple[bool, str]:
+    """Create and send backup archive to ERROR_REPORT_IDS. Returns (ok, detail)."""
+    if not ERROR_REPORT_IDS:
+        return False, t("backup_no_recipients")
+    archive_path = None
+    try:
+        archive_path = await asyncio.to_thread(create_backup_archive)
+        caption = t(
+            "backup_caption_manual" if manual else "backup_caption_auto",
+            time=time.strftime("%Y-%m-%d %H:%M:%S"),
+            db=DB_PATH.name,
+        )
+        ok = False
+        for admin_id in ERROR_REPORT_IDS:
+            try:
+                await bot.send_document(
+                    chat_id=admin_id,
+                    document=FSInputFile(archive_path),
+                    caption=caption,
+                )
+                ok = True
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(t("log_report_send_failed", admin_id=admin_id, error=exc))
+        if ok:
+            set_setting("backup_last_at", str(time.time()))
+            return True, caption
+        return False, t("backup_send_failed")
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Backup failed")
+        return False, str(exc)
+    finally:
+        if archive_path:
+            try:
+                os.remove(archive_path)
+            except OSError:
+                pass
+
+
+async def backup_scheduler(bot: Bot):
+    """Periodically send backups when enabled."""
+    await asyncio.sleep(30)
+    while True:
+        try:
+            if _backup_enabled():
+                last = float(get_setting("backup_last_at", "0") or "0")
+                interval = _backup_interval_seconds()
+                if time.time() - last >= interval:
+                    await send_backup(bot, manual=False)
+        except Exception:  # noqa: BLE001
+            logger.exception("Backup scheduler error")
+        await asyncio.sleep(60)
 
 
 # -------------------- RANKS / DATABASE --------------------
@@ -1365,6 +1483,79 @@ async def areset_command(message: Message):
     )
 
 
+@dp.message(Command("abackup"), IsAdmin())
+async def abackup_command(message: Message, bot: Bot):
+    schedule_delete(message.bot, message.chat.id, message.message_id, delay=BOT_COMMAND_TTL)
+    if message.chat.type != "private":
+        await answer_and_expire(message, t("admin_dm_only"))
+        return
+    args = admin_args(message)
+    action = (args[0].lower() if args else "status")
+
+    if action == "now":
+        await answer_and_expire(message, t("backup_creating"))
+        ok, detail = await send_backup(bot, manual=True)
+        await answer_and_expire(
+            message,
+            t("backup_sent" if ok else "backup_failed", detail=html.escape(str(detail))),
+            parse_mode="HTML",
+        )
+        return
+
+    if action in ("on", "enable"):
+        set_setting("backup_enabled", "1")
+        if not get_setting("backup_last_at"):
+            set_setting("backup_last_at", "0")
+        await answer_and_expire(message, t("backup_enabled_on"), parse_mode="HTML")
+        return
+
+    if action in ("off", "disable"):
+        set_setting("backup_enabled", "0")
+        await answer_and_expire(message, t("backup_enabled_off"), parse_mode="HTML")
+        return
+
+    if action == "interval":
+        if len(args) < 2:
+            await answer_and_expire(message, t("backup_interval_usage"), parse_mode="HTML")
+            return
+        try:
+            hours = float(args[1].replace(",", "."))
+        except ValueError:
+            await answer_and_expire(message, t("backup_interval_usage"), parse_mode="HTML")
+            return
+        if hours < 1:
+            hours = 1.0
+        set_setting("backup_interval_hours", str(hours))
+        await answer_and_expire(
+            message,
+            t("backup_interval_set", hours=hours),
+            parse_mode="HTML",
+        )
+        return
+
+    if action in ("status", "show"):
+        enabled = _backup_enabled()
+        hours = _backup_interval_seconds() / 3600.0
+        last = float(get_setting("backup_last_at", "0") or "0")
+        if last > 0:
+            last_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(last))
+        else:
+            last_str = t("backup_never")
+        await answer_and_expire(
+            message,
+            t(
+                "backup_status",
+                state=t("backup_state_on" if enabled else "backup_state_off"),
+                hours=hours,
+                last=last_str,
+            ),
+            parse_mode="HTML",
+        )
+        return
+
+    await answer_and_expire(message, t("backup_help"), parse_mode="HTML")
+
+
 @dp.message(Command("ranks"), ChatAllowed(), COMMAND_THROTTLE)
 async def ranks_command(message: Message):
     schedule_delete(message.bot, message.chat.id, message.message_id, delay=BOT_COMMAND_TTL)
@@ -1724,6 +1915,7 @@ async def run_bot():
     bot = Bot(TOKEN)
     print(t("startup_started"))
     delay = 5
+    asyncio.create_task(backup_scheduler(bot))
     try:
         while True:
             try:

@@ -76,7 +76,8 @@ STRINGS = {
         "{usage}\n\n"
         "/asetrank &lt;номер&gt; — выставить ранг (см. /ranks)\n"
         "/areset confirm — сбросить прогресс\n"
-        "/agroup add|del|list — белый список групп\n\n"
+        "/agroup add|del|list — белый список групп\n"
+        "/abackup — бэкап бота и БД (status|now|on|off|interval &lt;часы&gt;)\n\n"
         "В группе для /agroup add и /agroup del chat_id можно не указывать —\n"
         "будет использован текущий чат.\n\n"
         "Ваш Telegram ID: <code>{user_id}</code>"
@@ -147,6 +148,35 @@ STRINGS = {
         "Администратор бота может включить его для этой группы."
     ),
     "welcome_new_member": "{name} Привет, скинь ножки",
+
+    # --- backup ---
+    "backup_no_recipients": "Не задан ERROR_REPORT_IDS/ADMIN_IDS — некому отправить бэкап.",
+    "backup_caption_auto": "💾 Автобэкап CPU68 ({time}, БД: {db})",
+    "backup_caption_manual": "💾 Бэкап CPU68 ({time}, БД: {db})",
+    "backup_send_failed": "Не удалось отправить бэкап ни одному получателю.",
+    "backup_creating": "⏳ Создаю бэкап и отправляю...",
+    "backup_sent": "✅ Бэкап отправлен.\n{detail}",
+    "backup_failed": "⚠️ Не удалось выполнить бэкап: {detail}",
+    "backup_enabled_on": "✅ Автобэкап включён.",
+    "backup_enabled_off": "✅ Автобэкап выключен.",
+    "backup_interval_usage": "Использование: /abackup interval &lt;часы&gt; (минимум 1).",
+    "backup_interval_set": "✅ Интервал автобэкапа: {hours} ч.",
+    "backup_never": "ещё не выполнялся",
+    "backup_state_on": "включён",
+    "backup_state_off": "выключен",
+    "backup_status": (
+        "💾 <b>Бэкап</b>\n"
+        "Статус: <b>{state}</b>\n"
+        "Интервал: <b>{hours}</b> ч.\n"
+        "Последний: <code>{last}</code>"
+    ),
+    "backup_help": (
+        "💾 <b>/abackup</b>\n\n"
+        "/abackup status — состояние\n"
+        "/abackup now — сделать и отправить сейчас\n"
+        "/abackup on|off — включить/выключить автобэкап\n"
+        "/abackup interval &lt;часы&gt; — интервал (минимум 1)"
+    ),
 
     # --- error reports and logs ---
     "error_report_header": (

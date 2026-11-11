@@ -75,7 +75,8 @@ STRINGS = {
         "{usage}\n\n"
         "/asetrank &lt;number&gt; — set rank (see /ranks)\n"
         "/areset confirm — reset progress\n"
-        "/agroup add|del|list — group whitelist\n\n"
+        "/agroup add|del|list — group whitelist\n"
+        "/abackup — bot and DB backup (status|now|on|off|interval &lt;hours&gt;)\n\n"
         "In a group, chat_id may be omitted for /agroup add and /agroup del —\n"
         "the current chat is used.\n\n"
         "Your Telegram ID: <code>{user_id}</code>"
@@ -144,6 +145,35 @@ STRINGS = {
         "The bot administrator can enable it for this group."
     ),
     "welcome_new_member": "{name} Hi, send feet pics",
+
+    # --- backup ---
+    "backup_no_recipients": "ERROR_REPORT_IDS/ADMIN_IDS is not set — nowhere to send the backup.",
+    "backup_caption_auto": "💾 CPU68 auto-backup ({time}, DB: {db})",
+    "backup_caption_manual": "💾 CPU68 backup ({time}, DB: {db})",
+    "backup_send_failed": "Failed to send the backup to any recipient.",
+    "backup_creating": "⏳ Creating and sending backup...",
+    "backup_sent": "✅ Backup sent.\n{detail}",
+    "backup_failed": "⚠️ Backup failed: {detail}",
+    "backup_enabled_on": "✅ Auto-backup enabled.",
+    "backup_enabled_off": "✅ Auto-backup disabled.",
+    "backup_interval_usage": "Usage: /abackup interval &lt;hours&gt; (minimum 1).",
+    "backup_interval_set": "✅ Auto-backup interval: {hours} h.",
+    "backup_never": "never",
+    "backup_state_on": "enabled",
+    "backup_state_off": "disabled",
+    "backup_status": (
+        "💾 <b>Backup</b>\n"
+        "Status: <b>{state}</b>\n"
+        "Interval: <b>{hours}</b> h\n"
+        "Last: <code>{last}</code>"
+    ),
+    "backup_help": (
+        "💾 <b>/abackup</b>\n\n"
+        "/abackup status — show status\n"
+        "/abackup now — create and send now\n"
+        "/abackup on|off — enable/disable auto-backup\n"
+        "/abackup interval &lt;hours&gt; — interval (minimum 1)"
+    ),
 
     # --- error reports and logs ---
     "error_report_header": (

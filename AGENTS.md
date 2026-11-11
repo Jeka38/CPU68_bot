@@ -58,11 +58,20 @@ docker compose logs -f
   on counted messages. Public commands use `COMMAND_THROTTLE` (`COMMAND_COOLDOWN_SECONDS`) — do not
   add unthrottled public handlers. Use `announce_rank_up` for any count-changing path. Constants:
   `MESSAGES_PER_RANK` from env (default 100, min 1), `MAX_MESSAGES=10_000_000`, `RANKS` in `ranks.py`
-  (currently 55), messages `>= len(RANKS) * MESSAGES_PER_RANK` are `BEYOND_RANK`, progress `messages % MESSAGES_PER_RANK`. `parse_int`
-  rejects outside signed 64-bit; `MAX_MESSAGES` caps counters.
+  (currently 55), messages `>= len(RANKS) * MESSAGES_PER_RANK` are `BEYOND_RANK`, progress
+  `messages % MESSAGES_PER_RANK`. `parse_int` rejects outside signed 64-bit; `MAX_MESSAGES` caps
+  counters.
+- **Backup:** `/abackup` (admin DM only) configures and triggers backups. State lives in `settings`
+  (`backup_enabled`, `backup_interval_hours`, `backup_last_at`). `create_backup_archive()` builds a
+  `tar.gz` in a temp file (`/tmp` ok) containing bot/runtime files and `DB_PATH` plus `-wal/-shm`
+  if present; it must not include `.env` or secrets. `send_backup()` sends the archive to
+  `ERROR_REPORT_IDS` (fallback `ADMIN_IDS`); `backup_scheduler(bot)` runs in `run_bot()` and sends
+  when enabled and interval elapsed. Recipients must have `/start`ed the bot; `schedule_delete`
+  skips private chats so backup documents in DMs are not auto-deleted.
 - **Commands:** public group commands include `/profile`, `/user`, `/ranks`, `/top`, `/id` (plus
-  `/help`, `/start`); admin Telegram commands are `/admin`, `/asetrank`, `/areset`, `/agroup`. No
-  duplicate admin/user command names. Keep handler registration before the catch-all counter.
+  `/help`, `/start`); admin Telegram commands are `/admin`, `/asetrank`, `/areset`, `/agroup`,
+  `/abackup` (DM-only, `status|now|on|off|interval <hours>`). No duplicate admin/user command
+  names. Keep handler registration before the catch-all counter.
 - **Ranks/cards:** `RANK_STYLES` in `bot.py` must stay parallel to `RANKS` in `ranks.py` (same
   order/length). `draw_cpu` renders an index-based unique illustration per rank using `RANK_STYLES`
   label/colors. Rank-up cards fire on rank-boundary crossings (`/asetrank`, live counter); the final
