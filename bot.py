@@ -1496,7 +1496,7 @@ async def blocked_group_command(message: Message):
     if not text_value.startswith("/"):
         return
     schedule_delete(message.bot, message.chat.id, message.message_id)
-    if not BLOCKED_NOTICE_THROTTLE.allow(message.chat.id, message.from_user.id if message.from_user else 0):
+    if not await BLOCKED_NOTICE_THROTTLE(message):
         return
     await answer_and_expire(message, t("blocked_notice"))
 
