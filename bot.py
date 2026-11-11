@@ -3,6 +3,7 @@ import html
 import io
 import logging
 import os
+import random
 import re
 import sqlite3
 import sys
@@ -516,6 +517,41 @@ def _error_message(header: str, exc: BaseException) -> str:
     return redact_secrets(f"{header}<pre>{body}</pre>")
 
 
+BOT_MESSAGE_TTL = 10
+
+
+def schedule_delete(bot: Bot, chat_id: int, message_id: int, delay: int = BOT_MESSAGE_TTL):
+    async def _job():
+        try:
+            await asyncio.sleep(delay)
+            await bot.delete_message(chat_id, message_id)
+        except Exception:
+            pass
+
+    asyncio.create_task(_job())
+
+
+async def answer_and_expire(message: Message, *args, **kwargs):
+    sent = await message.answer(*args, **kwargs)
+    if sent:
+        schedule_delete(sent.bot, sent.chat.id, sent.message_id)
+    return sent
+
+
+async def send_photo_and_expire(bot: Bot, **kwargs):
+    sent = await bot.send_photo(**kwargs)
+    if sent:
+        schedule_delete(bot, sent.chat.id, sent.message_id)
+    return sent
+
+
+async def send_message_and_expire(bot: Bot, **kwargs):
+    sent = await bot.send_message(**kwargs)
+    if sent:
+        schedule_delete(bot, sent.chat.id, sent.message_id)
+    return sent
+
+
 def _update_context(event: ErrorEvent) -> str:
     update = event.update
     message = getattr(update, "message", None)
@@ -857,10 +893,13 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
     draw.text((x2 - 24, y1 + 34), f"LVL {idx + 1:02d}", font=load_font(22, True),
               fill=green_mid, anchor="rm")
 
-    # Section divider and labels
-    draw.line((x1 + 20, 160, x2 - 20, 160), fill=green_dark, width=2)
-    draw.text((70, 110), "CPU EVOLUTION // STATUS", font=load_font(28, True), fill=green, anchor="lm")
-    draw.text((70, 140), t("card_rank_label"), font=load_font(18, True), fill=green_dim, anchor="lm")
+    # Section divider and labels (equal vertical spacing)
+    top_y = 112
+    gap_y = 28
+    draw.text((70, top_y), "CPU EVOLUTION // STATUS", font=load_font(28, True), fill=green, anchor="lm")
+    draw.text((70, top_y + gap_y), t("card_rank_label"), font=load_font(18, True), fill=green_dim, anchor="lm")
+    divider_y = top_y + gap_y * 2
+    draw.line((x1 + 20, divider_y, x2 - 20, divider_y), fill=green_dark, width=2)
 
     # Right panel for CPU art
     rx1, ry1, rx2, ry2 = 720, 168, 1128, 590
@@ -897,7 +936,7 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
         rank_line_height = int(getattr(rank_font, "size", 46)) + 6
     rank_spacing = rank_line_height + 2
     left_x = 70
-    rank_top = 178
+    rank_top = divider_y + gap_y
     for i, line in enumerate(rank_lines):
         draw.text((left_x, rank_top + i * rank_spacing), line, font=rank_font, fill=green)
     rank_bottom = rank_top + rank_line_height + rank_spacing * (len(rank_lines) - 1)
@@ -963,7 +1002,7 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
     # Footer status line
     draw.line((x1 + 20, y2 - 38, x2 - 20, y2 - 38), fill=green_dark, width=2)
     draw.text((x1 + 24, y2 - 20), "STATUS: ONLINE", font=load_font(15, True), fill=green_dim, anchor="lm")
-    draw.text((x2 - 24, y2 - 20), "VAULT-TEC CPU DIVISION", font=load_font(15, True), fill=green_dim, anchor="rm")
+    draw.text((x2 - 24, y2 - 20), "Vault 68 - assоциальная сеть 🥔", font=load_font(15, True), fill=green_dim, anchor="rm")
 
     # Extra CRT noise dots (subtle)
     for i in range(0, W * H, 9000):
@@ -998,7 +1037,8 @@ async def send_rank_card(bot: Bot, chat_id: int, user_id: int,
             )
         else:
             caption += "\n" + t("rank_max")
-    await bot.send_photo(
+    await send_photo_and_expire(
+        bot,
         chat_id=chat_id,
         photo=BufferedInputFile(card, filename="cpu_rank.png"),
         caption=caption,
@@ -1022,7 +1062,7 @@ async def announce_rank_up(
             bot, chat_id, user_id, display_name, new_count, announce=True
         )
     elif new_count == len(RANKS) * MESSAGES_PER_RANK:
-        await bot.send_message(chat_id, t("rank_up_final"), parse_mode="HTML")
+        await send_message_and_expire(bot, chat_id=chat_id, text=t("rank_up_final"), parse_mode="HTML")
 
 
 # -------------------- TELEGRAM COMMANDS --------------------
@@ -1373,6 +1413,31 @@ async def agroup_command(message: Message, bot: Bot):
             t("agroup_not_found", chat_id=chat_id),
             parse_mode="HTML",
         )
+
+
+# -------------------- NEW MEMBER WELCOME --------------------
+
+
+@dp.message(F.new_chat_members, ChatAllowed())
+async def welcome_new_members(message: Message, bot: Bot):
+    for user in message.new_chat_members or []:
+        if user.is_bot:
+            continue
+        name = clean_text(user.full_name) or t("card_default_name")
+        delay = random.randint(30, 60)
+
+        async def _welcome(chat_id: int, username: str, wait: int):
+            try:
+                await asyncio.sleep(wait)
+                await send_message_and_expire(
+                    bot,
+                    chat_id=chat_id,
+                    text=t("welcome_new_member", name=username),
+                )
+            except Exception:
+                pass
+
+        asyncio.create_task(_welcome(message.chat.id, name, delay))
 
 
 # Register this catch-all handler AFTER command handlers.

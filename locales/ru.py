@@ -145,6 +145,7 @@ STRINGS = {
         "⚠️ Бот не активирован для этого чата. "
         "Администратор бота может включить его для этой группы."
     ),
+    "welcome_new_member": "{name} Привет, скинь ножки",
 
     # --- error reports and logs ---
     "error_report_header": (

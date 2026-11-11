@@ -142,6 +142,7 @@ STRINGS = {
         "⚠️ The bot is not enabled for this chat. "
         "The bot administrator can enable it for this group."
     ),
+    "welcome_new_member": "{name} Hi, send feet pics",
 
     # --- error reports and logs ---
     "error_report_header": (
