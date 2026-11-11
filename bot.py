@@ -1076,16 +1076,21 @@ async def announce_rank_up(
     display_name: str,
     old_count: int,
     new_count: int,
+    reply_to_message_id: int | None = None,
 ):
     """Send a rank-up card/text only if a rank boundary was crossed."""
     old_idx = old_count // MESSAGES_PER_RANK
     new_idx = new_count // MESSAGES_PER_RANK
     if new_idx > old_idx and new_idx < len(RANKS):
         await send_rank_card(
-            bot, chat_id, user_id, display_name, new_count, announce=False
+            bot, chat_id, user_id, display_name, new_count, announce=False,
+            reply_to_message_id=reply_to_message_id,
         )
     elif new_count == len(RANKS) * MESSAGES_PER_RANK:
-        await send_message_and_expire(bot, chat_id=chat_id, text=t("rank_up_final"), parse_mode="HTML")
+        kwargs = {"chat_id": chat_id, "text": t("rank_up_final"), "parse_mode": "HTML"}
+        if reply_to_message_id is not None:
+            kwargs["reply_to_message_id"] = reply_to_message_id
+        await send_message_and_expire(bot, **kwargs)
 
 
 # -------------------- TELEGRAM COMMANDS --------------------
@@ -1109,7 +1114,10 @@ async def profile_command(message: Message, bot: Bot):
         return
 
     count = get_messages(message.chat.id, target.id)
-    await send_rank_card(bot, message.chat.id, target.id, user_address_name(target), count)
+    await send_rank_card(
+        bot, message.chat.id, target.id, user_address_name(target), count,
+        reply_to_message_id=message.message_id,
+    )
 
 
 @dp.message(Command("id"), COMMAND_THROTTLE)
@@ -1326,7 +1334,10 @@ async def asetrank_command(message: Message, bot: Bot):
         parse_mode="HTML",
     )
     if new_count // MESSAGES_PER_RANK > old_count // MESSAGES_PER_RANK:
-        await send_rank_card(bot, chat_id, user_id, name, new_count, announce=True)
+        await send_rank_card(
+            bot, chat_id, user_id, name, new_count, announce=False,
+            reply_to_message_id=message.message_id,
+        )
 
 
 @dp.message(Command("areset"), IsAdmin())
