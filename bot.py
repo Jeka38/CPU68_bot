@@ -1071,11 +1071,13 @@ async def announce_rank_up(
 
 @dp.message(Command("start"), ChatAllowed(), COMMAND_THROTTLE)
 async def start_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     await message.answer(t("start_text"))
 
 
 @dp.message(Command("profile"), ChatAllowed(), COMMAND_THROTTLE)
 async def profile_command(message: Message, bot: Bot):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     if message.chat.type not in ("group", "supergroup"):
         await message.answer(t("profile_group_only"))
         return
@@ -1091,6 +1093,7 @@ async def profile_command(message: Message, bot: Bot):
 
 @dp.message(Command("id"), COMMAND_THROTTLE)
 async def id_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
     user_id = target.id if target else t("id_unknown")
     await message.answer(
@@ -1101,6 +1104,7 @@ async def id_command(message: Message):
 
 @dp.message(Command("top"), ChatAllowed(), COMMAND_THROTTLE)
 async def top_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     if message.chat.type not in ("group", "supergroup"):
         await message.answer(t("group_only"))
         return
@@ -1127,6 +1131,7 @@ async def top_command(message: Message):
 
 @dp.message(Command("help"), ChatAllowed(), COMMAND_THROTTLE)
 async def help_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     text = PUBLIC_HELP
     # Admin commands are listed only in a private chat with an admin.
     if is_admin(message.from_user) and message.chat.type == "private":
@@ -1219,6 +1224,7 @@ async def admin_usage_error(message: Message, exc: AdminUsage):
 
 @dp.message(Command("admin"), IsAdmin())
 async def admin_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     if message.chat.type != "private":
         await message.answer(t("admin_dm_only"))
         return
@@ -1230,6 +1236,7 @@ async def admin_command(message: Message):
 
 @dp.message(Command("user"), ChatAllowed(), COMMAND_THROTTLE)
 async def user_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     if message.chat.type not in ("group", "supergroup"):
         await message.answer(t("group_only"))
         return
@@ -1271,6 +1278,7 @@ async def user_command(message: Message):
 
 @dp.message(Command("asetrank"), IsAdmin())
 async def asetrank_command(message: Message, bot: Bot):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     try:
         chat_id, user_id, name, rest = resolve_admin_target(
             message, admin_args(message)
@@ -1302,6 +1310,7 @@ async def asetrank_command(message: Message, bot: Bot):
 
 @dp.message(Command("areset"), IsAdmin())
 async def areset_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     try:
         chat_id, user_id, name, rest = resolve_admin_target(
             message, admin_args(message)
@@ -1327,6 +1336,7 @@ async def areset_command(message: Message):
 
 @dp.message(Command("ranks"), ChatAllowed(), COMMAND_THROTTLE)
 async def ranks_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     lines = [t("ranks_header")]
     for i, rank in enumerate(RANKS, 1):
         low = (i - 1) * MESSAGES_PER_RANK
@@ -1352,6 +1362,7 @@ async def ranks_command(message: Message):
 
 @dp.message(Command("agroup"), IsAdmin())
 async def agroup_command(message: Message, bot: Bot):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
     args = admin_args(message)
     if not args:
         await message.answer(t("agroup_help"), parse_mode="HTML")
@@ -1469,12 +1480,13 @@ async def blocked_group_command(message: Message):
     """Explain why public commands are ignored in a non-whitelisted group."""
     if is_chat_allowed(message.chat.id):
         return
-    text_value = message.text or ""
+    text_value = message.text or message.caption or ""
     if not text_value.startswith("/"):
         return
-    if not await BLOCKED_NOTICE_THROTTLE(message):
+    schedule_delete(message.bot, message.chat.id, message.message_id)
+    if not BLOCKED_NOTICE_THROTTLE.allow(message.chat.id, message.from_user.id if message.from_user else 0):
         return
-    await message.answer(t("blocked_notice"))
+    await answer_and_expire(message, t("blocked_notice"))
 
 
 @dp.errors()
