@@ -621,7 +621,9 @@ async def notify_admins(bot: Bot, text: str, signature: str | None = None) -> No
 
     for admin_id in ERROR_REPORT_IDS:
         try:
-            await bot.send_message(admin_id, text, parse_mode="HTML")
+            sent = await bot.send_message(admin_id, text, parse_mode="HTML")
+            if sent:
+                schedule_delete(bot, sent.chat.id, sent.message_id)
         except Exception as exc:
             # An admin may not have started the bot yet; never fail because of it.
             logger.warning(
