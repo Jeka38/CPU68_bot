@@ -531,6 +531,10 @@ BOT_MESSAGE_TTL = 10
 
 
 def schedule_delete(bot: Bot, chat_id: int, message_id: int, delay: int = BOT_MESSAGE_TTL):
+    # Do not auto-delete bot messages sent to admins in private messages.
+    if chat_id > 0 and chat_id in (ERROR_REPORT_IDS | ADMIN_IDS):
+        return
+
     async def _job():
         try:
             await asyncio.sleep(delay)
