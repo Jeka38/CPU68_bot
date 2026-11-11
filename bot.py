@@ -1201,7 +1201,7 @@ async def announce_rank_up(
     new_idx = new_count // MESSAGES_PER_RANK
     if new_idx > old_idx and new_idx < len(RANKS):
         await send_rank_card(
-            bot, chat_id, user_id, display_name, new_count, announce=False,
+            bot, chat_id, user_id, display_name, new_count, announce=True,
             reply_to_message_id=reply_to_message_id,
         )
     elif new_count == len(RANKS) * MESSAGES_PER_RANK:
@@ -1453,7 +1453,7 @@ async def asetrank_command(message: Message, bot: Bot):
     )
     if new_count // MESSAGES_PER_RANK > old_count // MESSAGES_PER_RANK:
         await send_rank_card(
-            bot, chat_id, user_id, name, new_count, announce=False,
+            bot, chat_id, user_id, name, new_count, announce=True,
         )
 
 
