@@ -1336,7 +1336,6 @@ async def asetrank_command(message: Message, bot: Bot):
     if new_count // MESSAGES_PER_RANK > old_count // MESSAGES_PER_RANK:
         await send_rank_card(
             bot, chat_id, user_id, name, new_count, announce=False,
-            reply_to_message_id=message.message_id,
         )
 
 
@@ -1507,7 +1506,10 @@ async def count_group_messages(message: Message, bot: Bot):
     old_count, new_count = count_user_message(
         chat_id, user.id, address, now
     )
-    await announce_rank_up(bot, chat_id, user.id, address, old_count, new_count)
+    await announce_rank_up(
+        bot, chat_id, user.id, address, old_count, new_count,
+        reply_to_message_id=message.message_id,
+    )
 
 
 @dp.message(F.chat.type.in_({"group", "supergroup"}))
