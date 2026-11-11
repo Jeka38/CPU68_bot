@@ -672,16 +672,16 @@ async def answer_and_expire(message: Message, *args, **kwargs):
     return sent
 
 
-async def send_photo_and_expire(bot: Bot, **kwargs):
+async def send_photo_and_expire(bot: Bot, *, auto_delete: bool = True, **kwargs):
     sent = await bot.send_photo(**kwargs)
-    if sent:
+    if sent and auto_delete:
         schedule_delete(bot, sent.chat.id, sent.message_id, delay=BOT_REPLY_TTL)
     return sent
 
 
-async def send_message_and_expire(bot: Bot, **kwargs):
+async def send_message_and_expire(bot: Bot, *, auto_delete: bool = True, **kwargs):
     sent = await bot.send_message(**kwargs)
-    if sent:
+    if sent and auto_delete:
         schedule_delete(bot, sent.chat.id, sent.message_id, delay=BOT_REPLY_TTL)
     return sent
 
@@ -1155,7 +1155,8 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
 
 async def send_rank_card(bot: Bot, chat_id: int, user_id: int,
                          display_name: str, messages: int, announce: bool = False,
-                         reply_to_message_id: int | None = None):
+                         reply_to_message_id: int | None = None,
+                         auto_delete: bool = True):
     # Card rendering is CPU-bound: run it in a worker thread so polling and
     # other handlers stay responsive.
     card = await asyncio.to_thread(make_rank_card, display_name, messages)
@@ -1183,7 +1184,7 @@ async def send_rank_card(bot: Bot, chat_id: int, user_id: int,
     }
     if reply_to_message_id is not None:
         kwargs["reply_to_message_id"] = reply_to_message_id
-    await send_photo_and_expire(bot, **kwargs)
+    await send_photo_and_expire(bot, auto_delete=auto_delete, **kwargs)
 
 
 async def announce_rank_up(
@@ -1202,12 +1203,13 @@ async def announce_rank_up(
         await send_rank_card(
             bot, chat_id, user_id, display_name, new_count, announce=True,
             reply_to_message_id=reply_to_message_id,
+            auto_delete=False,
         )
     elif new_count == len(RANKS) * MESSAGES_PER_RANK:
         kwargs = {"chat_id": chat_id, "text": t("rank_up_final"), "parse_mode": "HTML"}
         if reply_to_message_id is not None:
             kwargs["reply_to_message_id"] = reply_to_message_id
-        await send_message_and_expire(bot, **kwargs)
+        await send_message_and_expire(bot, auto_delete=False, **kwargs)
 
 
 # -------------------- TELEGRAM COMMANDS --------------------
@@ -1453,6 +1455,7 @@ async def asetrank_command(message: Message, bot: Bot):
     if new_count // MESSAGES_PER_RANK > old_count // MESSAGES_PER_RANK:
         await send_rank_card(
             bot, chat_id, user_id, name, new_count, announce=True,
+            auto_delete=False,
         )
 
 
@@ -1809,7 +1812,7 @@ async def console_menu():
                 if old // MESSAGES_PER_RANK != new // MESSAGES_PER_RANK:
                     confirm = input(t("console_ask_card")).lower()
                     if confirm == "y":
-                        await send_rank_card(bot, chat_id, user_id, name, new, announce=True)
+                        await send_rank_card(bot, chat_id, user_id, name, new, announce=True, auto_delete=False)
                         print(t("console_card_sent"))
 
             elif choice == "3":
@@ -1837,7 +1840,7 @@ async def console_menu():
                 if new // MESSAGES_PER_RANK > old // MESSAGES_PER_RANK:
                     confirm = input(t("console_ask_card_plain")).lower()
                     if confirm == "y":
-                        await send_rank_card(bot, chat_id, user_id, name, new, announce=True)
+                        await send_rank_card(bot, chat_id, user_id, name, new, announce=True, auto_delete=False)
                         print(t("console_card_sent"))
 
             elif choice == "4":
