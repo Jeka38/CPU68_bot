@@ -1452,7 +1452,10 @@ async def welcome_new_members(message: Message, bot: Bot):
     for user in message.new_chat_members or []:
         if user.is_bot:
             continue
-        name = clean_text(user_address_name(user)) or t("card_default_name")
+        if user.username:
+            name = f"@{user.username}"
+        else:
+            name = clean_text(user.full_name or "") or t("card_default_name")
         delay = random.randint(30, 60)
 
         async def _welcome(chat_id: int, username: str, wait: int):
