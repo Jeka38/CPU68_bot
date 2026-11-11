@@ -1072,19 +1072,19 @@ async def announce_rank_up(
 @dp.message(Command("start"), ChatAllowed(), COMMAND_THROTTLE)
 async def start_command(message: Message):
     schedule_delete(message.bot, message.chat.id, message.message_id)
-    await message.answer(t("start_text"))
+    await answer_and_expire(message, t("start_text"))
 
 
 @dp.message(Command("profile"), ChatAllowed(), COMMAND_THROTTLE)
 async def profile_command(message: Message, bot: Bot):
     schedule_delete(message.bot, message.chat.id, message.message_id)
     if message.chat.type not in ("group", "supergroup"):
-        await message.answer(t("profile_group_only"))
+        await answer_and_expire(message, t("profile_group_only"))
         return
 
     target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
     if not target or target.is_bot:
-        await message.answer(t("user_not_determined"))
+        await answer_and_expire(message, t("user_not_determined"))
         return
 
     count = get_messages(message.chat.id, target.id)
@@ -1096,7 +1096,7 @@ async def id_command(message: Message):
     schedule_delete(message.bot, message.chat.id, message.message_id)
     target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
     user_id = target.id if target else t("id_unknown")
-    await message.answer(
+    await answer_and_expire(message, 
         t("id_text", chat_id=message.chat.id, user_id=user_id),
         parse_mode="HTML",
     )
@@ -1106,12 +1106,12 @@ async def id_command(message: Message):
 async def top_command(message: Message):
     schedule_delete(message.bot, message.chat.id, message.message_id)
     if message.chat.type not in ("group", "supergroup"):
-        await message.answer(t("group_only"))
+        await answer_and_expire(message, t("group_only"))
         return
 
     rows = get_top(message.chat.id, 10)
     if not rows:
-        await message.answer(t("top_empty"))
+        await answer_and_expire(message, t("top_empty"))
         return
 
     lines = [t("top_header")]
@@ -1126,7 +1126,7 @@ async def top_command(message: Message):
                 messages=row["messages"],
             )
         )
-    await message.answer(join_lines_fit(lines), parse_mode="HTML")
+    await answer_and_expire(message, join_lines_fit(lines), parse_mode="HTML")
 
 
 @dp.message(Command("help"), ChatAllowed(), COMMAND_THROTTLE)
@@ -1136,7 +1136,7 @@ async def help_command(message: Message):
     # Admin commands are listed only in a private chat with an admin.
     if is_admin(message.from_user) and message.chat.type == "private":
         text += "\n\n" + admin_help_text(message.from_user.id)
-    await message.answer(text, parse_mode="HTML")
+    await answer_and_expire(message, text, parse_mode="HTML")
 
 
 # -------------------- TELEGRAM ADMIN --------------------
@@ -1212,7 +1212,7 @@ def resolve_group_target(message: Message, args: list[str]):
 
 
 async def admin_usage_error(message: Message, exc: AdminUsage):
-    await message.answer(
+    await answer_and_expire(message, 
         t(
             "admin_usage_error",
             error=html.escape(str(exc)),
@@ -1226,9 +1226,9 @@ async def admin_usage_error(message: Message, exc: AdminUsage):
 async def admin_command(message: Message):
     schedule_delete(message.bot, message.chat.id, message.message_id)
     if message.chat.type != "private":
-        await message.answer(t("admin_dm_only"))
+        await answer_and_expire(message, t("admin_dm_only"))
         return
-    await message.answer(
+    await answer_and_expire(message, 
         admin_help_text(message.from_user.id),
         parse_mode="HTML",
     )
@@ -1238,17 +1238,17 @@ async def admin_command(message: Message):
 async def user_command(message: Message):
     schedule_delete(message.bot, message.chat.id, message.message_id)
     if message.chat.type not in ("group", "supergroup"):
-        await message.answer(t("group_only"))
+        await answer_and_expire(message, t("group_only"))
         return
 
     target = message.reply_to_message.from_user if message.reply_to_message else message.from_user
     if not target or target.is_bot:
-        await message.answer(t("user_not_determined"))
+        await answer_and_expire(message, t("user_not_determined"))
         return
 
     row = get_user(message.chat.id, target.id)
     if not row:
-        await message.answer(
+        await answer_and_expire(message, 
             t("user_not_found", user_id=target.id),
             parse_mode="HTML",
         )
@@ -1271,7 +1271,7 @@ async def user_command(message: Message):
         )
     else:
         text += t("user_max")
-    await message.answer(text, parse_mode="HTML")
+    await answer_and_expire(message, text, parse_mode="HTML")
 
 
 
@@ -1295,7 +1295,7 @@ async def asetrank_command(message: Message, bot: Bot):
     old_count = get_messages(chat_id, user_id)
     new_count = (selected - 1) * MESSAGES_PER_RANK
     save_user(chat_id, user_id, name, new_count)
-    await message.answer(
+    await answer_and_expire(message, 
         t(
             "asetrank_done",
             name=esc_name(name),
@@ -1320,7 +1320,7 @@ async def areset_command(message: Message):
         return
 
     if not rest or rest[0].lower() != "confirm":
-        await message.answer(
+        await answer_and_expire(message, 
             t("areset_confirm", name=esc_name(name)),
             parse_mode="HTML",
         )
@@ -1328,7 +1328,7 @@ async def areset_command(message: Message):
 
     old_count = get_messages(chat_id, user_id)
     save_user(chat_id, user_id, name, 0)
-    await message.answer(
+    await answer_and_expire(message, 
         t("areset_done", old=old_count),
         parse_mode="HTML",
     )
@@ -1357,7 +1357,7 @@ async def ranks_command(message: Message):
             threshold=len(RANKS) * MESSAGES_PER_RANK,
         )
     )
-    await message.answer("\n".join(lines), parse_mode="HTML")
+    await answer_and_expire(message, "\n".join(lines), parse_mode="HTML")
 
 
 @dp.message(Command("agroup"), IsAdmin())
@@ -1365,7 +1365,7 @@ async def agroup_command(message: Message, bot: Bot):
     schedule_delete(message.bot, message.chat.id, message.message_id)
     args = admin_args(message)
     if not args:
-        await message.answer(t("agroup_help"), parse_mode="HTML")
+        await answer_and_expire(message, t("agroup_help"), parse_mode="HTML")
         return
 
     action = args[0].lower()
@@ -1374,7 +1374,7 @@ async def agroup_command(message: Message, bot: Bot):
     if action == "list":
         rows = get_allowed_chats()
         if not rows:
-            await message.answer(t("agroup_empty"), parse_mode="HTML")
+            await answer_and_expire(message, t("agroup_empty"), parse_mode="HTML")
             return
         lines = [t("agroup_header")]
         for row in rows:
@@ -1386,17 +1386,17 @@ async def agroup_command(message: Message, bot: Bot):
                     chat_id=row["chat_id"],
                 )
             )
-        await message.answer(join_lines_fit(lines), parse_mode="HTML")
+        await answer_and_expire(message, join_lines_fit(lines), parse_mode="HTML")
         return
 
     if action not in ("add", "del"):
-        await message.answer(t("agroup_unknown_action"), parse_mode="HTML")
+        await answer_and_expire(message, t("agroup_unknown_action"), parse_mode="HTML")
         return
 
     try:
         chat_id, title = resolve_group_target(message, rest)
     except AdminUsage as exc:
-        await message.answer(
+        await answer_and_expire(message, 
             t("agroup_error", error=html.escape(str(exc))),
             parse_mode="HTML",
         )
@@ -1410,19 +1410,19 @@ async def agroup_command(message: Message, bot: Bot):
             except Exception:
                 title = ""
         add_allowed_chat(chat_id, title)
-        await message.answer(
+        await answer_and_expire(message, 
             t("agroup_added", chat_id=chat_id),
             parse_mode="HTML",
         )
         return
 
     if remove_allowed_chat(chat_id):
-        await message.answer(
+        await answer_and_expire(message, 
             t("agroup_removed", chat_id=chat_id),
             parse_mode="HTML",
         )
     else:
-        await message.answer(
+        await answer_and_expire(message, 
             t("agroup_not_found", chat_id=chat_id),
             parse_mode="HTML",
         )
