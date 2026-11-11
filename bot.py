@@ -1036,7 +1036,8 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
 
 
 async def send_rank_card(bot: Bot, chat_id: int, user_id: int,
-                         display_name: str, messages: int, announce: bool = False):
+                         display_name: str, messages: int, announce: bool = False,
+                         reply_to_message_id: int | None = None):
     # Card rendering is CPU-bound: run it in a worker thread so polling and
     # other handlers stay responsive.
     card = await asyncio.to_thread(make_rank_card, display_name, messages)
@@ -1057,13 +1058,15 @@ async def send_rank_card(bot: Bot, chat_id: int, user_id: int,
             )
         else:
             caption += "\n" + t("rank_max")
-    await send_photo_and_expire(
-        bot,
-        chat_id=chat_id,
-        photo=BufferedInputFile(card, filename="cpu_rank.png"),
-        caption=caption,
-        parse_mode="HTML",
-    )
+    kwargs = {
+        "chat_id": chat_id,
+        "photo": BufferedInputFile(card, filename="cpu_rank.png"),
+        "caption": caption,
+        "parse_mode": "HTML",
+    }
+    if reply_to_message_id is not None:
+        kwargs["reply_to_message_id"] = reply_to_message_id
+    await send_photo_and_expire(bot, **kwargs)
 
 
 async def announce_rank_up(
