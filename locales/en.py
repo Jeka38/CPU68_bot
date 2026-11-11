@@ -13,6 +13,7 @@ STRINGS = {
     "card_next": "{progress}%  |  NEXT: {next_rank}",
     "card_max": "{progress}%  |  MAXIMUM RANK",
     "card_footer": "{step} MESSAGES = 1 EVOLUTION",
+    "card_vault_label": "Vault 68",
     "card_default_name": "Telegram user",
 
     # --- public commands ---

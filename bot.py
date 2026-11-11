@@ -1016,7 +1016,7 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
     # Footer status line
     draw.line((x1 + 20, y2 - 38, x2 - 20, y2 - 38), fill=green_dark, width=2)
     draw.text((x1 + 24, y2 - 20), "STATUS: ONLINE", font=load_font(15, True), fill=green_dim, anchor="lm")
-    draw.text((x2 - 24, y2 - 20), "Vault 68 - assоциальная сеть 🥔", font=load_font(15, True), fill=green_dim, anchor="rm")
+    draw.text((x2 - 24, y2 - 20), t("card_vault_label"), font=load_font(15, True), fill=green_dim, anchor="rm")
 
     # Extra CRT noise dots (subtle)
     for i in range(0, W * H, 9000):
