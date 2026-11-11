@@ -1166,16 +1166,15 @@ async def send_rank_card(bot: Bot, chat_id: int, user_id: int,
         rank=html.escape(rank_name(messages)),
         messages=messages,
     )
-    if not announce:
-        nxt = next_rank_name(messages)
-        if nxt:
-            caption += "\n" + t(
-                "rank_next",
-                next_rank=html.escape(nxt),
-                remaining=MESSAGES_PER_RANK - (messages % MESSAGES_PER_RANK),
-            )
-        else:
-            caption += "\n" + t("rank_max")
+    nxt = next_rank_name(messages)
+    if nxt:
+        caption += "\n" + t(
+            "rank_next",
+            next_rank=html.escape(nxt),
+            remaining=MESSAGES_PER_RANK - (messages % MESSAGES_PER_RANK),
+        )
+    else:
+        caption += "\n" + t("rank_max")
     kwargs = {
         "chat_id": chat_id,
         "photo": BufferedInputFile(card, filename="cpu_rank.png"),
