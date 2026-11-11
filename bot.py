@@ -896,7 +896,7 @@ def make_rank_card(display_name: str, messages: int) -> bytes:
               fill=green_mid, anchor="rm")
 
     # Section divider and labels (equal vertical spacing)
-    top_y = 112
+    top_y = 118
     gap_y = 28
     draw.text((70, top_y), "CPU EVOLUTION // STATUS", font=load_font(28, True), fill=green, anchor="lm")
     draw.text((70, top_y + gap_y), t("card_rank_label"), font=load_font(18, True), fill=green_dim, anchor="lm")
