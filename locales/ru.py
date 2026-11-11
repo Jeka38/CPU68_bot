@@ -13,7 +13,7 @@ STRINGS = {
     "card_next": "{progress}%  |  ДАЛЕЕ: {next_rank}",
     "card_max": "{progress}%  |  МАКСИМАЛЬНЫЙ РАНГ",
     "card_footer": "{step} СООБЩЕНИЙ = 1 ЭВОЛЮЦИЯ",
-    "card_vault_label": "Vault 68",
+    "card_vault_label": "VAULT68-TEC CPU DEVISION",
     "card_default_name": "Пользователь Telegram",
 
     # --- public commands ---
