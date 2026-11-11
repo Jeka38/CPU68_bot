@@ -456,6 +456,16 @@ def clean_text(value: str) -> str:
     return " ".join(text.split())
 
 
+def user_address_name(user) -> str:
+    """Preferred name for addressing a user: username or full name."""
+    if not user:
+        return ""
+    username = getattr(user, "username", None)
+    if username:
+        return str(username)
+    return getattr(user, "full_name", "") or ""
+
+
 def esc_name(value: str, limit: int = 48) -> str:
     """Sanitize, truncate and HTML-escape a user/group name."""
     text = clean_text(value) or "—"
@@ -571,6 +581,8 @@ def _update_context(event: ErrorEvent) -> str:
         lines.append(f"chat_id: <code>{chat_id}</code>")
     if user_id is not None:
         lines.append(f"user_id: <code>{user_id}</code>")
+    if user:
+        name = user_address_name(user) or name
     if name:
         lines.append(f"user: {esc_name(name, 64)}")
     # Only commands are included: regular group messages stay private.
@@ -1088,7 +1100,7 @@ async def profile_command(message: Message, bot: Bot):
         return
 
     count = get_messages(message.chat.id, target.id)
-    await send_rank_card(bot, message.chat.id, target.id, target.full_name, count)
+    await send_rank_card(bot, message.chat.id, target.id, user_address_name(target), count)
 
 
 @dp.message(Command("id"), COMMAND_THROTTLE)
@@ -1176,7 +1188,7 @@ def resolve_admin_target(message: Message, args: list[str]):
     ):
         user = reply.from_user
         row = get_user(message.chat.id, user.id)
-        name = row["display_name"] if row else user.full_name
+        name = row["display_name"] if row else user_address_name(user)
         return message.chat.id, user.id, name, args
 
     if message.chat.type == "private":
@@ -1436,7 +1448,7 @@ async def welcome_new_members(message: Message, bot: Bot):
     for user in message.new_chat_members or []:
         if user.is_bot:
             continue
-        name = clean_text(user.full_name) or t("card_default_name")
+        name = clean_text(user_address_name(user)) or t("card_default_name")
         delay = random.randint(30, 60)
 
         async def _welcome(chat_id: int, username: str, wait: int):
@@ -1469,10 +1481,11 @@ async def count_group_messages(message: Message, bot: Bot):
     now = time.time()
     if now - get_last_counted_at(chat_id, user.id) < MESSAGE_COOLDOWN_SECONDS:
         return
+    address = user_address_name(user)
     old_count, new_count = count_user_message(
-        chat_id, user.id, user.full_name, now
+        chat_id, user.id, address, now
     )
-    await announce_rank_up(bot, chat_id, user.id, user.full_name, old_count, new_count)
+    await announce_rank_up(bot, chat_id, user.id, address, old_count, new_count)
 
 
 @dp.message(F.chat.type.in_({"group", "supergroup"}))
