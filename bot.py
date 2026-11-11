@@ -1454,8 +1454,7 @@ async def welcome_new_members(message: Message, bot: Bot):
         async def _welcome(chat_id: int, username: str, wait: int):
             try:
                 await asyncio.sleep(wait)
-                await send_message_and_expire(
-                    bot,
+                await bot.send_message(
                     chat_id=chat_id,
                     text=t("welcome_new_member", name=username),
                 )
