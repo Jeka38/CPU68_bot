@@ -1530,6 +1530,11 @@ async def aignore_command(message: Message):
 
     ignore_user(chat_id, user_id)
     save_user(chat_id, user_id, name, 0)
+    db.execute(
+        "UPDATE users SET messages=0 WHERE chat_id=? AND user_id=?",
+        (chat_id, user_id),
+    )
+    db.commit()
     await answer_and_expire(
         message,
         t("aignore_done", name=esc_name(name), user_id=user_id),
