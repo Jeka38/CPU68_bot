@@ -75,6 +75,8 @@ STRINGS = {
         "{usage}\n\n"
         "/asetrank &lt;number&gt; — set rank (see /ranks)\n"
         "/areset confirm — reset progress\n"
+        "/aignore — ignore user and reset rating\n"
+        "/aunignore — remove user from ignore list\n"
         "/agroup add|del|list — group whitelist\n"
         "/abackup — bot and DB backup (status|now|on|off|interval &lt;hours&gt;)\n\n"
         "In a group, chat_id may be omitted for /agroup add and /agroup del —\n"
@@ -115,6 +117,9 @@ STRINGS = {
         "Repeat the command with <code>confirm</code>."
     ),
     "areset_done": "♻️ Progress reset: {old} → <b>0</b>.",
+    "aignore_done": "🚫 <b>{name}</b> (<code>{user_id}</code>) is now ignored, rating reset.",
+    "aunignore_done": "✅ <b>{name}</b> (<code>{user_id}</code>) removed from ignore list.",
+    "aunignore_not_found": "ℹ️ <b>{name}</b> (<code>{user_id}</code>) was not ignored.",
     "ranks_header": "🖥 <b>CPU Evolution ranks</b>",
     "ranks_line": "{number:2}. {rank} — {low}-{high} messages",
     "ranks_beyond": "🏆 {beyond_rank} — from {threshold} messages",

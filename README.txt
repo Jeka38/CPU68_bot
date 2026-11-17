@@ -88,6 +88,8 @@ docker compose up -d --build
 - `/admin` — справка и ваш Telegram ID.
 - `/asetrank N` — выставить ранг N (список — `/ranks`); можно ответом на сообщение, иначе с `user_id` (в ЛС: `<chat_id> <user_id> N`).
 - `/areset confirm` — сбросить прогресс участника.
+- `/aignore` — игнорировать пользователя в чате и обнулить его рейтинг (сообщения не учитываются).
+- `/aunignore` — снять игнор с пользователя.
 - `/agroup add|del|list` — управление белым списком групп.
 - `/abackup` — бэкап бота и БД (только в ЛС): `status|now|on|off|interval <часы>`; архив `tar.gz` отправляется в `ERROR_REPORT_IDS`/`ADMIN_IDS`.
 

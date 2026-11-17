@@ -216,6 +216,13 @@ CREATE TABLE IF NOT EXISTS settings (
     value TEXT NOT NULL
 )
 """)
+db.execute("""
+CREATE TABLE IF NOT EXISTS ignored_users (
+    chat_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    PRIMARY KEY (chat_id, user_id)
+)
+""")
 user_columns = {row["name"] for row in db.execute("PRAGMA table_info(users)")}
 if "last_counted_at" not in user_columns:
     db.execute(
@@ -465,6 +472,31 @@ def save_user(chat_id: int, user_id: int, display_name: str, messages: int):
         (chat_id, user_id, display_name, messages),
     )
     db.commit()
+
+
+def is_user_ignored(chat_id: int, user_id: int) -> bool:
+    row = db.execute(
+        "SELECT 1 FROM ignored_users WHERE chat_id=? AND user_id=?",
+        (chat_id, user_id),
+    ).fetchone()
+    return row is not None
+
+
+def ignore_user(chat_id: int, user_id: int) -> None:
+    db.execute(
+        "INSERT OR IGNORE INTO ignored_users(chat_id, user_id) VALUES (?, ?)",
+        (chat_id, user_id),
+    )
+    db.commit()
+
+
+def unignore_user(chat_id: int, user_id: int) -> bool:
+    cursor = db.execute(
+        "DELETE FROM ignored_users WHERE chat_id=? AND user_id=?",
+        (chat_id, user_id),
+    )
+    db.commit()
+    return cursor.rowcount > 0
 
 
 def get_top(chat_id: int, limit: int = 10):
@@ -1485,6 +1517,45 @@ async def areset_command(message: Message):
     )
 
 
+@dp.message(Command("aignore"), IsAdmin())
+async def aignore_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id, delay=BOT_COMMAND_TTL)
+    try:
+        chat_id, user_id, name, _rest = resolve_admin_target(
+            message, admin_args(message)
+        )
+    except AdminUsage as exc:
+        await admin_usage_error(message, exc)
+        return
+
+    ignore_user(chat_id, user_id)
+    save_user(chat_id, user_id, name, 0)
+    await answer_and_expire(
+        message,
+        t("aignore_done", name=esc_name(name), user_id=user_id),
+        parse_mode="HTML",
+    )
+
+
+@dp.message(Command("aunignore"), IsAdmin())
+async def aunignore_command(message: Message):
+    schedule_delete(message.bot, message.chat.id, message.message_id, delay=BOT_COMMAND_TTL)
+    try:
+        chat_id, user_id, name, _rest = resolve_admin_target(
+            message, admin_args(message)
+        )
+    except AdminUsage as exc:
+        await admin_usage_error(message, exc)
+        return
+
+    removed = unignore_user(chat_id, user_id)
+    await answer_and_expire(
+        message,
+        t("aunignore_done" if removed else "aunignore_not_found", name=esc_name(name), user_id=user_id),
+        parse_mode="HTML",
+    )
+
+
 @dp.message(Command("abackup"), IsAdmin())
 async def abackup_command(message: Message, bot: Bot):
     schedule_delete(message.bot, message.chat.id, message.message_id, delay=BOT_COMMAND_TTL)
@@ -1692,6 +1763,8 @@ async def count_group_messages(message: Message, bot: Bot):
         return
 
     chat_id = message.chat.id
+    if is_user_ignored(chat_id, user.id):
+        return
     now = time.time()
     if now - get_last_counted_at(chat_id, user.id) < MESSAGE_COOLDOWN_SECONDS:
         return

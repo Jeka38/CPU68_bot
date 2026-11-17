@@ -76,6 +76,8 @@ STRINGS = {
         "{usage}\n\n"
         "/asetrank &lt;номер&gt; — выставить ранг (см. /ranks)\n"
         "/areset confirm — сбросить прогресс\n"
+        "/aignore — игнорировать пользователя и обнулить рейтинг\n"
+        "/aunignore — снять игнор с пользователя\n"
         "/agroup add|del|list — белый список групп\n"
         "/abackup — бэкап бота и БД (status|now|on|off|interval &lt;часы&gt;)\n\n"
         "В группе для /agroup add и /agroup del chat_id можно не указывать —\n"
@@ -116,6 +118,9 @@ STRINGS = {
         "Повторите команду с <code>confirm</code>."
     ),
     "areset_done": "♻️ Прогресс сброшен: {old} → <b>0</b>.",
+    "aignore_done": "🚫 <b>{name}</b> (<code>{user_id}</code>) добавлен в игнор, рейтинг обнулён.",
+    "aunignore_done": "✅ <b>{name}</b> (<code>{user_id}</code>) удалён из игнора.",
+    "aunignore_not_found": "ℹ️ <b>{name}</b> (<code>{user_id}</code>) не был в игноре.",
     "ranks_header": "🖥 <b>Ранги CPU Evolution</b>",
     "ranks_line": "{number:2}. {rank} — {low}-{high} сообщений",
     "ranks_beyond": "🏆 {beyond_rank} — от {threshold} сообщений",
